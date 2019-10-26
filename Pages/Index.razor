@@ -1,0 +1,150 @@
+@page "/"
+@page "/{Playlist}"
+
+@using MIDIPianoJukebox.Data
+@inject NavigationManager NavigationManager
+@inject JukeboxService JukeboxService
+
+@if (jukebox == null)
+{
+    <p><em>Loading...</em></p>
+    <img src="/giphy.gif" alt="Loading..." />
+}
+else
+{
+    <div class="mat-layout-grid">
+        <div class="mat-layout-grid-inner">
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+                <div class="mat-elevation-z4" style="padding: 10px; margin-bottom: 10px;">
+                    Playlists
+                    <div>
+                        @foreach (var p in jukebox.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name))
+                        {
+                            <a href="@($"/{p.Name}")" class="navItem">
+                                @p.Name (@($"{p.Tunes.Count:#,##0}"))
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="mat-elevation-z4" style="padding: 10px;">
+                    <MatButton Raised="true" Icon="@MatIconNames.Skip_next" OnClick="@(e => doPlayNext())" Disabled="@(!jukebox.Queue.Any())">Play Next (@($"{jukebox.Queue.Count:#,##0}"))</MatButton>
+                    @if (jukebox.Current.State == States.Playing)
+                    {
+                        <MatButton Raised="true" Icon="@MatIconNames.Pause_circle_filled" OnClick="@(e => doPause())">Pause</MatButton>
+                    }
+                    else if (jukebox.Current.State == States.Paused)
+                    {
+                        <MatButton Raised="true" Icon="@MatIconNames.Play_circle_outline" OnClick="@(e => doPlay())">Resume</MatButton>
+                    }
+                    @if (jukebox.Current.State != States.Stopped)
+                    {
+                        <MatButton Raised="true" Icon="@MatIconNames.Replay" OnClick="@(e => doReplay(0))" Disabled="@(!jukebox.Queue.Any())">Replay</MatButton>
+                        <MatButton Raised="true" Icon="@MatIconNames.Fast_forward" OnClick="@(e => doSkip(10_000))" Disabled="@(!jukebox.Queue.Any())">Skip 10</MatButton>
+                    }
+
+                    <MatSlideToggle @bind-Checked="@PlayRandom"></MatSlideToggle> <span>Random</span>
+
+                    @if (jukebox.Current.State == States.Stopped)
+                    {
+                        <span>Stopped</span>
+                    }
+                    else if (jukebox.Current.State == States.Playing)
+                    {
+                        <span>Playing</span>
+                    }
+                    else if (jukebox.Current.State == States.Paused)
+                    {
+                        <span>Paused</span>
+                    }
+                </div>
+                @if (jukebox.Current.Tune != null)
+                {
+                    <div class="mat-layout-grid-inner mat-elevation-z4" style="padding: 10px">
+                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 justify-right">
+                            @jukebox.Current.CurrentTime.ToString("m\\:ss")
+                        </div>
+                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-10">
+                            <MatProgressBar Progress="@jukebox.Current.Progress" Style="height: 18px"></MatProgressBar>
+                        </div>
+                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
+                            @jukebox.Current.RemainingTime.ToString("m\\:ss")
+                        </div>
+                    </div>
+                    <TuneCard Tune="@jukebox.Current.Tune" OnRatingChanged="@(r => doRatingChanged(jukebox.Current.Tune, r, true))"></TuneCard>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Playlist { get; set; }
+    private bool PlayRandom = false;
+    Jukebox jukebox;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        NavigationManager.LocationChanged += (s, e) => doNavTo();
+        jukebox = await JukeboxService.GetJukeboxAsync();
+        jukebox.Current.ProgressChanged += (s, e) => InvokeAsync(() => StateHasChanged());
+        JukeboxService.ReadyToPlayNext += (s, a) => InvokeAsync(() => doPlayNext());
+        doNavTo();
+    }
+
+    protected void doNavTo()
+    {
+        if (jukebox == null) return;
+
+        if (string.IsNullOrWhiteSpace(Playlist))
+        {
+            Playlist = jukebox.Playlists.OrderBy(p => p.Tunes?.Count ?? 0).Select(p => p.Name).FirstOrDefault();
+        }
+
+        var p = jukebox.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
+        if (p != null)
+        {
+            JukeboxService.DequeueAll();
+            JukeboxService.EnqueueAll(p.Tunes);
+        }
+        StateHasChanged();
+    }
+
+    protected void doRatingChanged(Tune t, float rating, bool next = false)
+    {
+        t.Rating = rating;
+        JukeboxService.SaveTune(t);
+        if (next && rating <= 3f) JukeboxService.PlayNext(PlayRandom);
+        StateHasChanged();
+    }
+
+    protected void doPlay()
+    {
+        JukeboxService.ResumePlayer();
+        StateHasChanged();
+    }
+
+    protected void doPlayNext()
+    {
+        JukeboxService.PlayNext(PlayRandom);
+        StateHasChanged();
+    }
+
+    protected void doPause()
+    {
+        JukeboxService.PausePlayer();
+        StateHasChanged();
+    }
+
+    protected void doSkip(int ticks)
+    {
+        JukeboxService.SkipPlayer(ticks);
+        StateHasChanged();
+    }
+
+    protected void doReplay(int ticks)
+    {
+        JukeboxService.SkipPlayerTo(ticks);
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,17 @@
+﻿@namespace MIDIPianoJukebox
+@inherits ToggleButtonBase
+
+<button class="@ClassMapper.Class" style="@Style" @ref="Ref" disabled=@Disabled @onclick="OnClickHandler" @onmousedown="OnMouseDown" @attributes="Attributes" Id="@Id">
+    @if (Icon != null)
+    {
+        @if (ToggleIcon != null && Toggled)
+        {
+            <MatIcon Icon="@ToggleIcon"></MatIcon>
+        }
+        else
+        {
+            <MatIcon Icon="@Icon"></MatIcon>
+        }
+    }
+    @ChildContent
+</button>

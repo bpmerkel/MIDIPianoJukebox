@@ -1,0 +1,35 @@
+﻿@page "/about"
+
+<div class="mat-elevation-z4" style="padding: 10px;">
+    <h3>About MIDI Piano Jukebox</h3>
+    <p>
+        So my wife purchased a Baby Grand Player Piano, and much to my delight, it included MIDI Out and In connections.
+        Then, I inherited a PC from my father where he had accumulated over 170,000 MIDI files from varying genres.
+    </p>
+    <p>
+        Thus commenced my challenge: to find (or create) a MIDI Jukebox app to navigate through the thousands of MIDI files,
+        enable rating, and display any metadata that could help me sort and filter through them all. I found a few small apps that were file
+        and folder-based, but none that gave a comprehensive Jukebox experience with customizable Playlists, a queue, and the ability to
+        rate songs as they were played (some of the MIDI songs just didn't fit my taste for the Piano).
+    </p>
+    <p>
+        And since .NET Core 3 and Blazor were just released, I knew the time was nigh to craft a Jukebox web site myself, where
+        I could run on an old Windows 10 laptop under IIS, with a USB MIDI adapter into the piano. That's right--this is a dedicated web
+        server that runs on the Windows device hard-connected to the Piano.
+    </p>
+    <p>
+        I first started with LINQPad to try out some MIDI NuGet packages to comb through the MIDI files... and then ultimately
+        to Play the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter.
+    </p>
+    <p>
+        Here's where I wound up:
+        <ul>
+            <li>.NET Core 3</li>
+            <li>ASP.NET Core 3</li>
+            <li>Blazor</li>
+            <li>MatBlazor Material UI Components</li>
+            <li>LiteDB Document Database</li>
+            <li>No Bootstrap</li>
+        </ul>
+    </p>
+</div>

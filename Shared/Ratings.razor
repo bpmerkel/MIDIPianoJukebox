@@ -1,0 +1,18 @@
+﻿<MatIconButton Icon="@doGetIcon(1)" OnClick="() => doSetRating(1)"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(2)" OnClick="() => doSetRating(2)"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(3)" OnClick="() => doSetRating(3)"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(4)" OnClick="() => doSetRating(4)"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(5)" OnClick="() => doSetRating(5)"></MatIconButton>
+
+@code {
+    [Parameter] public int Rating { get; set; }
+    [Parameter] public EventCallback<int> RatingChanged { get; set; }
+
+    protected string doGetIcon(int rating) => rating <= Rating ? MatIconNames.Star : MatIconNames.Star_border;
+
+    // perform a toggle-like action when user clicks a star already enabled
+    protected async Task doSetRating(int rating) {
+        Rating = Rating == rating ? rating - 1 : rating;
+        await RatingChanged.InvokeAsync(Rating);
+    }
+}

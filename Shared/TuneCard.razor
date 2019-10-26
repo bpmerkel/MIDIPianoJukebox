@@ -1,0 +1,57 @@
+﻿@using MIDIPianoJukebox.Data
+
+<MatCard Class="mat-layout-grid  mat-elevation-z4">
+    <MatCardContent Class="mat-layout-grid-inner">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            @Tune.Name
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+            <span class="topLabel">Library</span><br />@Tune.Library
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+            <span class="topLabel">Duration</span><br />@Tune.Duration.ToString("m\\:ss")
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+            <span class="topLabel">Tracks</span><br />@Tune.Tracks
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+            <span class="topLabel">Plays</span><br />@Tune.Plays
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <TagList Tune="@Tune"></TagList>
+            <RatingsHalf Rating="@Tune.Rating" RatingChanged="@(r => doRatingChanged(Tune, r))"></RatingsHalf>
+            @if (OnEnqueue.HasDelegate)
+            {
+                <MatIconButton Icon="@MatIconNames.Add_to_queue" OnClick="@(_ => doEnqueue())" title="Add to Queue" Class="no-padding"></MatIconButton>
+            }
+            @if (OnDequeue.HasDelegate)
+            {
+                <MatIconButton Icon="@MatIconNames.Remove_from_queue" OnClick="@(_ => doDequeue())" title="Remove from Queue" Class="no-padding"></MatIconButton>
+            }
+        </div>
+    </MatCardContent>
+</MatCard>
+
+@code {
+    [Parameter] public Tune Tune { get; set; }
+    [Parameter] public EventCallback<Tune> OnDequeue { get; set; }
+    [Parameter] public EventCallback<Tune> OnEnqueue { get; set; }
+    [Parameter] public EventCallback<float> OnRatingChanged { get; set; }
+
+    protected async void doEnqueue()
+    {
+        await OnEnqueue.InvokeAsync(Tune);
+    }
+
+    protected async void doDequeue()
+    {
+        await OnDequeue.InvokeAsync(Tune);
+    }
+
+    protected async void doRatingChanged(Tune t, float rating)
+    {
+        t.Rating = rating;
+        await OnRatingChanged.InvokeAsync(rating);
+        StateHasChanged();
+    }
+}

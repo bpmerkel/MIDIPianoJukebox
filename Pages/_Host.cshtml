@@ -1,0 +1,25 @@
+﻿@page "/"
+@namespace MIDIPianoJukebox.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using EmbeddedBlazorContent
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MIDI Piano Jukebox</title>
+    <base href="~/" />
+    <link icon="favicon.ico" />
+    <environment include="Development">
+    </environment>
+    <environment exclude="Development">
+    </environment>
+    <link href="css/site.css" rel="stylesheet" />
+    @Html.EmbeddedBlazorContent()
+</head>
+<body class="mat">
+    <app style="display: flex;">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</app>
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

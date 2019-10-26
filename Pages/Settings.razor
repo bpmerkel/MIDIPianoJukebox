@@ -1,0 +1,93 @@
+﻿@page "/settings"
+@using MIDIPianoJukebox.Data
+@inject JukeboxService JukeboxService
+
+<h3>Settings</h3>
+<div class="mat-elevation-z4" style="padding: 10px;">
+    @if (jukebox == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <MatTextField @bind-Value="@jukebox.Settings.MIDIPath" Label="MIDI Path" Outlined="true" Disabled="@processing"></MatTextField>
+        <MatButton Raised="true" Icon="@MatIconNames.Queue_music" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh Database</MatButton>
+        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(_ => doDatabaseCleanse())" Disabled="@processing">Cleanse Database</MatButton>
+        <MatSelect Label="MIDI Output Device" Enhanced="true" Value="@jukebox.Settings.OutputDevice" ValueChanged="@(v => doChangeOutputDevice(v))">
+            @foreach (var od in JukeboxService.GetDevices())
+            {
+                <MatOption Value="@od.Id">@od.Name</MatOption>
+            }
+            <MatOption Value="refresh">(Refresh List)</MatOption>
+        </MatSelect>
+    }
+</div>
+
+<h3>Log</h3>
+
+<div class="mat-elevation-z4" style="padding: 10px; overflow-y: scroll; height: calc(100vh - 310px)">
+    @if (processing)
+    {
+        <MatProgressBar Progress="@Progress" Style="height: 20px"></MatProgressBar>
+    }
+    @foreach (var log in JukeboxService.Log)
+    {
+        <div>@log</div>
+    }
+</div>
+
+@code {
+    double Progress = 0d;
+    bool processing = false;
+
+    Jukebox jukebox;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        jukebox = await JukeboxService.GetJukeboxAsync();
+    }
+
+    async void addLog(string msg)
+    {
+        await JukeboxService.AddLog(msg);
+        await base.InvokeAsync(StateHasChanged);
+    }
+
+    async void updateProgress(double prg)
+    {
+        Progress = prg;
+        await base.InvokeAsync(StateHasChanged);
+    }
+
+    protected async Task doDatabaseRefresh()
+    {
+        processing = true;
+        JukeboxService.SaveSettings();
+        await JukeboxService.RefreshDatabase(msg => addLog(msg), prg => updateProgress(prg));
+        await base.InvokeAsync(StateHasChanged);
+        processing = false;
+    }
+
+    protected async Task doDatabaseCleanse()
+    {
+        processing = true;
+        JukeboxService.SaveSettings();
+        await JukeboxService.CleanseDatabase(msg => addLog(msg), prg => updateProgress(prg));
+        await base.InvokeAsync(StateHasChanged);
+        processing = false;
+    }
+
+    protected void doChangeOutputDevice(string id)
+    {
+        if (id == "refresh")
+        {
+            StateHasChanged();
+        }
+        else
+        {
+            jukebox.Settings.OutputDevice = id;
+            JukeboxService.SaveSettings();
+        }
+    }
+}

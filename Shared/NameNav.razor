@@ -1,0 +1,21 @@
+﻿@using MIDIPianoJukebox.Data
+
+<div class="alphaList">
+    <a href="@(Path)" class="alphaLink">ALL</a>
+    @foreach (var start in nav)
+    {
+        <a href="@($"{Path}?start={start}")" class="alphaLink">@start</a>
+    }
+</div>
+
+@code {
+    private static string[] nav = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".Select(c => c.ToString()).ToArray();
+    private string _path;
+
+    [Parameter]
+    public string Path
+    {
+        get => _path;
+        set => _path = new Uri(value).LocalPath;
+    }
+}

@@ -1,0 +1,41 @@
+﻿<MatIconButton Icon="@doGetIcon(1f)" OnClick="@((_) => doSetRating(1f))"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(2f)" OnClick="@((_) => doSetRating(2f))"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(3f)" OnClick="@((_) => doSetRating(3f))"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(4f)" OnClick="@((_) => doSetRating(4f))"></MatIconButton>
+<MatIconButton Icon="@doGetIcon(5f)" OnClick="@((_) => doSetRating(5f))"></MatIconButton>
+
+@code {
+    [Parameter] public float Rating { get; set; }
+    [Parameter] public EventCallback<float> RatingChanged { get; set; }
+
+    protected string doGetIcon(float rating)
+    {
+        //var min = rating - 1f;
+        var mid = rating - .5f;
+        var max = rating;
+        if (Rating >= max) return MatIconNames.Star;
+        if (Rating >= mid) return MatIconNames.Star_half;
+        //if (Rating >= min) return MatIconNames.Star_border;
+        return MatIconNames.Star_border;
+    }
+
+    // perform a toggle-like action when user clicks a star already enabled
+    protected async Task doSetRating(float rating)
+    {
+        var min = rating - 1f;
+        var mid = rating - .5f;
+        var max = rating;
+        if(Rating >= min && Rating <= max)
+        {
+            // in button range
+            if (Rating == min) Rating = max;
+            else if (Rating == mid) Rating = min;
+            else if (Rating == max) Rating = mid;
+        }
+        else
+        {
+            Rating = max;
+        }
+        await RatingChanged.InvokeAsync(Rating);
+    }
+}
