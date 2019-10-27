@@ -2,73 +2,21 @@
 @using MIDIPianoJukebox.Data
 @inject JukeboxService JukeboxService
 
-<MatAppBar Style="z-index: 100;" Class="mat">
-    <MatAppBarRow>
-        <MatAppBarSection>
-            <MatIconButton Icon="@MatIconNames.Menu" OnClick="@(e => MenuButtonClicked(e))"></MatIconButton>
-            <MatAppBarTitle>MIDI Piano Jukebox</MatAppBarTitle>
-        </MatAppBarSection>
-        <MatAppBarSection Align="@MatAppBarSectionAlign.End">
-            <MatIconButton Link="about" Icon="@MatIconNames.Help"></MatIconButton>
-        </MatAppBarSection>
-    </MatAppBarRow>
-</MatAppBar>
-
-<MatDrawerContainer Style="width: 100vw; height: 100vh;" Class="mat">
-    <MatHidden Breakpoint="@MatBreakpoint.SM"
-               Direction="@MatHiddenDirection.Up"
-               HiddenChanged="@ModelDrawerHiddenChanged">
-        <ChildContent>
-            <MatDrawer @bind-Opened="@_navMenuOpened" Mode="@MatDrawerMode.Modal">
-                <MatAppBarAdjust></MatAppBarAdjust>
-                <NavMenu></NavMenu>
-            </MatDrawer>
-        </ChildContent>
-        <ElseContent>
-            <MatDrawer @bind-Opened="@_navMenuOpened" Mode="@MatDrawerMode.Dismissible">
-                <MatAppBarAdjust></MatAppBarAdjust>
-                <NavMenu></NavMenu>
-            </MatDrawer>
-        </ElseContent>
-    </MatHidden>
-
-    <MatDrawerContent Style="padding-left: 5px; padding-right: 5px;">
-        <MatAppBarAdjust></MatAppBarAdjust>
+<MatAppBarContainer>
+    <MatAppBar Style="z-index: 100;" Class="mat">
+        <MatAppBarRow>
+            <MatAppBarSection>
+                <MatAppBarTitle>MIDI Piano Jukebox</MatAppBarTitle>
+            </MatAppBarSection>
+            <MatAppBarSection Align="@MatAppBarSectionAlign.End">
+                <MatIconButton Link="/" Icon="@MatIconNames.Home"></MatIconButton>
+                <MatIconButton Link="playlists" Icon="@MatIconNames.Queue_music"></MatIconButton>
+                <MatIconButton Link="settings" Icon="@MatIconNames.Settings"></MatIconButton>
+                <MatIconButton Link="about" Icon="@MatIconNames.Help"></MatIconButton>
+            </MatAppBarSection>
+        </MatAppBarRow>
+    </MatAppBar>
+    <MatAppBarContent>
         @Body
-    </MatDrawerContent>
-</MatDrawerContainer>
-
-<MatSnackbar @bind-IsOpen="@lazySnackbarIsOpen">
-    <MatSnackbarContent>If you like MatBlazor, please put a star on GitHub.</MatSnackbarContent>
-    <MatSnackbarActions>
-        <MatIconButton Icon="@MatIconNames.Stars" Link="https://github.com/BlazorComponents/MatBlazor" style="color: white;" target="_blank"></MatIconButton>
-    </MatSnackbarActions>
-</MatSnackbar>
-
-@code {
-    bool lazySnackbarIsOpen = false;
-
-    bool _navMenuOpened = true;
-
-    Jukebox jukebox;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        jukebox = await JukeboxService.GetJukeboxAsync();
-    }
-
-    protected void ModelDrawerHiddenChanged(bool hidden)
-    {
-        if (!hidden)
-        {
-            _navMenuOpened = false;
-        }
-    }
-
-    void MenuButtonClicked(MouseEventArgs m)
-    {
-        _navMenuOpened = !_navMenuOpened;
-        this.StateHasChanged();
-    }
-}
+    </MatAppBarContent>
+</MatAppBarContainer>

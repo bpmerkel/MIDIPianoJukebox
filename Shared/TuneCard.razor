@@ -3,23 +3,33 @@
 <MatCard Class="mat-layout-grid  mat-elevation-z4">
     <MatCardContent Class="mat-layout-grid-inner">
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            @Tune.Name
+            <h3>@Tune.Name</h3>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
-            <span class="topLabel">Library</span><br />@Tune.Library
+            <span class="topLabel">Library</span><br />
+            <a href="@($"/library/{Tune.Library}")" class="tagLink">@Tune.Library</a>
         </div>
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
             <span class="topLabel">Duration</span><br />@Tune.Duration.ToString("m\\:ss")
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
             <span class="topLabel">Tracks</span><br />@Tune.Tracks
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
             <span class="topLabel">Plays</span><br />@Tune.Plays
         </div>
+        @if (!OnRatingChanged.HasDelegate)
+        {
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+                <span class="topLabel">Rating</span><br />@Tune.Rating
+            </div>
+        }
         <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
             <TagList Tune="@Tune"></TagList>
-            <RatingsHalf Rating="@Tune.Rating" RatingChanged="@(r => doRatingChanged(Tune, r))"></RatingsHalf>
+            @if (OnRatingChanged.HasDelegate)
+            {
+                <RatingsHalf Rating="@Tune.Rating" RatingChanged="@(r => doRatingChanged(Tune, r))"></RatingsHalf>
+            }
             @if (OnEnqueue.HasDelegate)
             {
                 <MatIconButton Icon="@MatIconNames.Add_to_queue" OnClick="@(_ => doEnqueue())" title="Add to Queue" Class="no-padding"></MatIconButton>

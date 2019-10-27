@@ -16,7 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Shared\ToggleButtonBase.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Shared\NavMenu.razor" />
     <Content Remove="Shared\Ratings.razor" />
+    <Content Remove="Shared\ToggleButton.razor" />
     <Content Remove="web.config" />
   </ItemGroup>
 

@@ -20,12 +20,6 @@ namespace MIDIPianoJukebox
         public string Icon { get; set; }
 
         /// <summary>
-        /// *Not available yet
-        /// </summary>
-        [Parameter]
-        public string Target { get; set; }
-
-        /// <summary>
         /// Icon to use when Button is clicked
         /// </summary>
         [Parameter]
@@ -43,7 +37,8 @@ namespace MIDIPianoJukebox
         public ToggleButtonBase()
         {
             ClassMapper
-                .Add("mdc-icon-button");
+                .Add("mdc-icon-button")
+                .If("mdc-chip--activated", () => Toggled);
         }
 
         /// <summary>
@@ -55,6 +50,9 @@ namespace MIDIPianoJukebox
         [Parameter]
         public EventCallback<MouseEventArgs> OnMouseDown { get; set; }
 
+        [Parameter]
+        public EventCallback<bool> OnToggledChanged { get; set; }
+
         protected async override Task OnFirstAfterRenderAsync()
         {
             await base.OnFirstAfterRenderAsync();
@@ -64,6 +62,7 @@ namespace MIDIPianoJukebox
         protected void OnClickHandler(MouseEventArgs ev)
         {
             Toggled = !Toggled;
+            OnToggledChanged.InvokeAsync(Toggled);
             OnClick.InvokeAsync(ev);
         }
     }

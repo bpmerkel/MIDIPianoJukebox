@@ -214,8 +214,22 @@ namespace MIDIPianoJukebox.Data
             }
         }
 
+        public void ClearPlaylist(string playlistName)
+        {
+            if (!string.IsNullOrWhiteSpace(playlistName))
+            {
+                var playlist = jukebox.Playlists.FirstOrDefault(p => p.Name.Equals(playlistName, StringComparison.CurrentCultureIgnoreCase));
+                if (playlist != null)
+                {
+                    jukebox.Playlists.Remove(playlist);
+                    using var db = new LiteRepository(cxstring);
+                    db.Delete<Playlist>(p => p.ID == playlist.ID);
+                }
+            }
+        }
+
         // get the next Tune from the queue and play it
-        public void PlayNext(bool playRandom)
+        public void PlayNext(bool shuffle)
         {
             // interrupt any current playing Tune
             StopPlayer();
@@ -223,7 +237,7 @@ namespace MIDIPianoJukebox.Data
             if (jukebox.Queue.Any())
             {
                 // get the next queue item
-                var idx = playRandom ? new Random().Next(0, jukebox.Queue.Count - 1) : 0;
+                var idx = shuffle ? new Random().Next(0, jukebox.Queue.Count - 1) : 0;
                 jukebox.Current.Tune = jukebox.Queue[idx];
                 jukebox.Queue.RemoveAt(idx);
                 SaveTune(jukebox.Current.Tune);

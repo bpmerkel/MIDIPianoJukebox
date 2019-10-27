@@ -7,27 +7,20 @@
 
 @if (jukebox == null)
 {
-    <p><em>Loading...</em></p>
-    <img src="/giphy.gif" alt="Loading..." />
+    <div style="text-align: center; align-content: center; vertical-align: middle">
+        <em>Loading...</em><br />
+        <img src="/giphy.gif" alt="Loading..." />
+    </div>
 }
 else
 {
     <div class="mat-layout-grid">
         <div class="mat-layout-grid-inner">
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <div class="mat-elevation-z4" style="padding: 10px; margin-bottom: 10px;">
-                    Playlists
-                    <div>
-                        @foreach (var p in jukebox.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name))
-                        {
-                            <a href="@($"/{p.Name}")" class="navItem">
-                                @p.Name (@($"{p.Tunes.Count:#,##0}"))
-                            </a>
-                        }
-                    </div>
-                </div>
                 <div class="mat-elevation-z4" style="padding: 10px;">
-                    <MatButton Raised="true" Icon="@MatIconNames.Skip_next" OnClick="@(e => doPlayNext())" Disabled="@(!jukebox.Queue.Any())">Play Next (@($"{jukebox.Queue.Count:#,##0}"))</MatButton>
+                    <h3>@Playlist (@($"{jukebox.Queue.Count:#,##0}"))</h3>
+                    <MatButton Icon="@MatIconNames.Shuffle" Raised="@Shuffle" Outlined="@(!Shuffle)" OnClick="@(m => Shuffle = !Shuffle)">Shuffle</MatButton>
+                    <MatButton Raised="true" Icon="@MatIconNames.Skip_next" OnClick="@(e => doPlayNext())" Disabled="@(!jukebox.Queue.Any())">Play Next</MatButton>
                     @if (jukebox.Current.State == States.Playing)
                     {
                         <MatButton Raised="true" Icon="@MatIconNames.Pause_circle_filled" OnClick="@(e => doPause())">Pause</MatButton>
@@ -41,8 +34,6 @@ else
                         <MatButton Raised="true" Icon="@MatIconNames.Replay" OnClick="@(e => doReplay(0))" Disabled="@(!jukebox.Queue.Any())">Replay</MatButton>
                         <MatButton Raised="true" Icon="@MatIconNames.Fast_forward" OnClick="@(e => doSkip(10_000))" Disabled="@(!jukebox.Queue.Any())">Skip 10</MatButton>
                     }
-
-                    <MatSlideToggle @bind-Checked="@PlayRandom"></MatSlideToggle> <span>Random</span>
 
                     @if (jukebox.Current.State == States.Stopped)
                     {
@@ -72,6 +63,19 @@ else
                     </div>
                     <TuneCard Tune="@jukebox.Current.Tune" OnRatingChanged="@(r => doRatingChanged(jukebox.Current.Tune, r, true))"></TuneCard>
                 }
+                <div class="mat-elevation-z4" style="padding: 10px; margin-bottom: 10px;">
+                    <div>
+                        @{
+                            var pl = jukebox.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList();
+                            var last = pl.Count - 1;
+                            var comma = ", ";
+                            foreach (var p in pl.Select((p, i) => new { p, delim = i < last ? comma : string.Empty }))
+                            {
+                                <a href="@($"/{p.p.Name}")" class="navItem">@p.p.Name&nbsp;(@($"{p.p.Tunes.Count:#,##0}"))</a>@p.delim
+                            }
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -79,7 +83,7 @@ else
 
 @code {
     [Parameter] public string Playlist { get; set; }
-    private bool PlayRandom = false;
+    bool Shuffle = true;
     Jukebox jukebox;
 
     protected override async Task OnInitializedAsync()
@@ -105,7 +109,7 @@ else
         if (p != null)
         {
             JukeboxService.DequeueAll();
-            JukeboxService.EnqueueAll(p.Tunes);
+            JukeboxService.EnqueueAll(p.Tunes.OrderBy(t => t.Filepath).ToList());
         }
         StateHasChanged();
     }
@@ -114,7 +118,7 @@ else
     {
         t.Rating = rating;
         JukeboxService.SaveTune(t);
-        if (next && rating <= 3f) JukeboxService.PlayNext(PlayRandom);
+        if (next && rating <= 3f) JukeboxService.PlayNext(Shuffle);
         StateHasChanged();
     }
 
@@ -126,7 +130,7 @@ else
 
     protected void doPlayNext()
     {
-        JukeboxService.PlayNext(PlayRandom);
+        JukeboxService.PlayNext(Shuffle);
         StateHasChanged();
     }
 
