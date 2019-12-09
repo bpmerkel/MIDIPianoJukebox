@@ -13,13 +13,13 @@
         <MatTextField @bind-Value="@jukebox.Settings.MIDIPath" Label="MIDI Path" Outlined="true" Disabled="@processing"></MatTextField>
         <MatButton Raised="true" Icon="@MatIconNames.Queue_music" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh Database</MatButton>
         <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(_ => doDatabaseCleanse())" Disabled="@processing">Cleanse Database</MatButton>
-        <MatSelect Label="MIDI Output Device" Enhanced="true" Value="@jukebox.Settings.OutputDevice" ValueChanged="@(v => doChangeOutputDevice(v))">
+        <MatSelectString Label="MIDI Output Device" Enhanced="true" Value="@jukebox.Settings.OutputDevice" ValueChanged="@(v => doChangeOutputDevice(v))">
             @foreach (var od in JukeboxService.GetDevices())
             {
                 <MatOption Value="@od.Id">@od.Name</MatOption>
             }
-            <MatOption Value="refresh">(Refresh List)</MatOption>
-        </MatSelect>
+            <MatOption Value=@("refresh")>(Refresh List)</MatOption>
+        </MatSelectString>
     }
 </div>
 
@@ -78,15 +78,15 @@
         processing = false;
     }
 
-    protected void doChangeOutputDevice(string id)
+    protected void doChangeOutputDevice(string sel)
     {
-        if (id == "refresh")
+        if (sel == "refresh")
         {
             StateHasChanged();
         }
         else
         {
-            jukebox.Settings.OutputDevice = id;
+            jukebox.Settings.OutputDevice = sel;
             JukeboxService.SaveSettings();
         }
     }

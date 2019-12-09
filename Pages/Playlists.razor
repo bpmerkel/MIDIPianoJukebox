@@ -48,7 +48,7 @@ else
         <div class="mat-layout-grid-inner">
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
                 <div class="mat-elevation-z4" style="padding: 10px;">
-                    <MatTextField Value="@playlist" Label="Search" Outlined="true" ValueChanged="@(s => doSearch(s))"></MatTextField>
+                    <MatStringField  Value="@playlist" Label="Search" Outlined="true" ValueChanged="@(s => doSearch(s))"></MatStringField>
                     @{
                         var exists = jukebox.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
                         <MatButton Disabled="@exists" Raised="true" OnClick="@(m => createPlaylist())">Create Playlist</MatButton>
