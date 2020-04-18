@@ -3,7 +3,7 @@
 @inject JukeboxService JukeboxService
 
 <h3>Settings</h3>
-<div class="mat-elevation-z4" style="padding: 10px;">
+<div class="mat-elevation-z4" style="padding: 10px; white-space: nowrap;">
     @if (jukebox == null)
     {
         <p><em>Loading...</em></p>
@@ -11,15 +11,15 @@
     else
     {
         <MatTextField @bind-Value="@jukebox.Settings.MIDIPath" Label="MIDI Path" Outlined="true" Disabled="@processing"></MatTextField>
-        <MatButton Raised="true" Icon="@MatIconNames.Queue_music" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh Database</MatButton>
-        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(_ => doDatabaseCleanse())" Disabled="@processing">Cleanse Database</MatButton>
-        <MatSelectString Label="MIDI Output Device" Enhanced="true" Value="@jukebox.Settings.OutputDevice" ValueChanged="@(v => doChangeOutputDevice(v))">
+        <MatButton Raised="true" Icon="@MatIconNames.Queue_music" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh</MatButton>
+        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(_ => doDatabaseCleanse())" Disabled="@processing">Cleanse</MatButton>
+        <MatSelect Label="MIDI Output Device" Enhanced="true" Value="@jukebox.Settings.OutputDevice" TValue="string" ValueChanged="@doChangeOutputDevice">
             @foreach (var od in JukeboxService.GetDevices())
             {
                 <MatOption Value="@od.Id">@od.Name</MatOption>
             }
             <MatOption Value=@("refresh")>(Refresh List)</MatOption>
-        </MatSelectString>
+        </MatSelect>
     }
 </div>
 
@@ -28,7 +28,7 @@
 <div class="mat-elevation-z4" style="padding: 10px; overflow-y: scroll; height: calc(100vh - 310px)">
     @if (processing)
     {
-        <MatProgressBar Progress="@Progress" Style="height: 20px"></MatProgressBar>
+        <MatProgressBar Progress="@Progress"></MatProgressBar>
     }
     @foreach (var log in JukeboxService.Log)
     {

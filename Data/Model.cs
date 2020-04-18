@@ -1,4 +1,3 @@
-using Commons.Music.Midi;
 using LiteDB;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ namespace MIDIPianoJukebox.Data
 {
     public class Tune: IEqualityComparer<Tune>
     {
-        [BsonId] public string ID { get; set; }
+        [BsonId] public ObjectId ID { get; set; }
         public string Name { get; set; }
         public string Filepath { get; set; }
         public string Library { get; set; }
@@ -22,7 +21,7 @@ namespace MIDIPianoJukebox.Data
         [BsonIgnore] public TimeSpan Duration => TimeSpan.FromMilliseconds(Durationms);
 
         public bool Equals([AllowNull] Tune x, [AllowNull] Tune y) => x?.ID == y?.ID;
-        public int GetHashCode([DisallowNull] Tune obj) => obj?.ID.GetHashCode(StringComparison.CurrentCultureIgnoreCase) ?? 0;
+        public int GetHashCode([DisallowNull] Tune obj) => obj?.ID.GetHashCode() ?? 0;
     }
 
     public class Library: IEqualityComparer<Library>
@@ -32,20 +31,21 @@ namespace MIDIPianoJukebox.Data
         public bool Equals([AllowNull] Library x, [AllowNull] Library y) => x?.Name == y?.Name;
         public int GetHashCode([DisallowNull] Library obj) => obj?.Name.GetHashCode(StringComparison.CurrentCultureIgnoreCase) ?? 0;
     }
+
     public class Playlist: IEqualityComparer<Playlist>
     {
-        [BsonId] public string ID { get; set; }
+        [BsonId] public ObjectId ID { get; set; }
         public string Name { get; set; }
         public int Plays { get; set; } = 0;
         [BsonRef(nameof(Tune))]
         public List<Tune> Tunes { get; set; } = new List<Tune>();
         public bool Equals([AllowNull] Playlist x, [AllowNull] Playlist y) => x?.ID == y?.ID;
-        public int GetHashCode([DisallowNull] Playlist obj) => obj?.ID.GetHashCode(StringComparison.CurrentCultureIgnoreCase) ?? 0;
+        public int GetHashCode([DisallowNull] Playlist obj) => obj?.ID.GetHashCode() ?? 0;
     }
 
     public class Settings
     {
-        [BsonId] public string ID { get; set; } = ObjectId.NewObjectId().ToString();
+        [BsonId] public ObjectId ID { get; set; } = ObjectId.NewObjectId();
         public string MIDIPath { get; set; } = @"e:\MIDI";
         public string OutputDevice { get; set; } = "0";
     }
@@ -80,7 +80,7 @@ namespace MIDIPianoJukebox.Data
         public Settings Settings { get; set; } = new Settings();
         public List<Playlist> Playlists { get; private set; }
         public List<Library> Libraries { get; private set; }
-        public List<Tune> Queue { get; set; } = new List<Tune>();
+        public List<Tune> Queue { get; } = new List<Tune>();
 
         private List<Tune> _tunes;
         public List<Tune> Tunes

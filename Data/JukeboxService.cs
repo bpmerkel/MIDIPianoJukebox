@@ -15,7 +15,7 @@ namespace MIDIPianoJukebox.Data
 {
     public sealed partial class JukeboxService
     {
-        const string cxstring = "Filename=jukebox.db; Mode=Shared; Cache Size=5000";
+        const string cxstring = "Filename=jukebox.db";
         private Jukebox jukebox;
 
         public static List<string> Log { get; } = new List<string>();
@@ -41,10 +41,10 @@ namespace MIDIPianoJukebox.Data
 
                     if (playlists.Count() == 0)
                     {
-                        playlists.Insert(new Playlist { Name = "Favorites", ID = Guid.NewGuid().ToString() });
+                        playlists.Insert(new Playlist { Name = "Favorites", ID = ObjectId.NewObjectId() });
                     }
 
-                    jukebox = new Jukebox(playlists.IncludeAll().FindAll(), tunes.IncludeAll().FindAll(), settings.IncludeAll().FindOne(q => true));
+                    jukebox = new Jukebox(playlists.FindAll(), tunes.FindAll(), settings.FindOne(q => true));
                     return jukebox;
                 }
             });
@@ -78,11 +78,11 @@ namespace MIDIPianoJukebox.Data
                         .ToList()
                         .ForEach(e =>
                         {
-                            db.Delete<Tune>(t => t.Filepath == e.tune.Filepath);
+                            db.Delete<Tune>(e.tune.ID);
                             if (e.i % 10 == 0) progress(.5 + .5d * e.i / todelete.Count);
                         });
 
-                    db.Database.Shrink();
+                    db.Database.Rebuild();
 
                     jukebox.Tunes = db.Query<Tune>().ToList();
                 }
@@ -165,11 +165,15 @@ namespace MIDIPianoJukebox.Data
                     tune.Tags = tags
                         .Where(m => !string.IsNullOrWhiteSpace(m))
                         .Where(m => m.Length > 3)
-                        .Distinct()
                         .Select(m => toTitleCase(m))
                         .OrderBy(m => m)
+                        .Distinct()
                         .ToList();
-                    db.Upsert(tune);
+
+                    if (tune.Filepath != null)
+                    {
+                        db.Upsert(tune);
+                    }
 
                     Interlocked.Increment(ref counter);
                     if (counter % 500 == 0 || counter == total)
@@ -177,13 +181,13 @@ namespace MIDIPianoJukebox.Data
                         var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
                         var msleft = (total - counter) / rate; // = ms
                         var eta = DateTime.Now.AddMilliseconds(msleft);
-                        logger($"{counter:#,##0} = {(counter / total):P0} {eta:h:mm:ss} eta: {subpath} => {library} / {name}");
+                        logger($"{(total - counter):#,##0} = {(counter / total):P0} eta: {eta:h:mm:ss} {subpath} => {library} / {name}");
                         progress(counter / total);
                     }
                 });
 
                 logger("Shrinking Database...");
-                db.Database.Shrink();
+                db.Database.Rebuild();
                 jukebox.Tunes = db.Query<Tune>().ToList();
                 logger("Database refresh complete");
             });
@@ -203,6 +207,11 @@ namespace MIDIPianoJukebox.Data
 
         public void SavePlaylist(Playlist playlist)
         {
+            if (playlist is null)
+            {
+                throw new ArgumentNullException(nameof(playlist));
+            }
+
             using var db = new LiteRepository(cxstring);
             if (playlist.Tunes.Count > 0)
             {
@@ -210,7 +219,7 @@ namespace MIDIPianoJukebox.Data
             }
             else
             {
-                db.Delete<Playlist>(p => p.ID == playlist.ID);
+                db.Delete<Playlist>(playlist.ID);
             }
         }
 
@@ -223,7 +232,7 @@ namespace MIDIPianoJukebox.Data
                 {
                     jukebox.Playlists.Remove(playlist);
                     using var db = new LiteRepository(cxstring);
-                    db.Delete<Playlist>(p => p.ID == playlist.ID);
+                    db.Delete<Playlist>(playlist.ID);
                 }
             }
         }

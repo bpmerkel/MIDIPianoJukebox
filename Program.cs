@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace MIDIPianoJukebox
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -13,8 +13,8 @@ namespace MIDIPianoJukebox
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+            {
+                webBuilder.UseStartup<Startup>();
+            });
     }
 }
