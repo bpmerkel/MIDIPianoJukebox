@@ -17,6 +17,7 @@ namespace MIDIPianoJukebox.Data
     {
         const string cxstring = "Filename=jukebox.db";
         private Jukebox jukebox;
+        private readonly object syncroot = new object();
 
         public static List<string> Log { get; } = new List<string>();
 
@@ -25,7 +26,7 @@ namespace MIDIPianoJukebox.Data
             return Task.Run(() =>
             {
                 if (jukebox != null) return jukebox;
-                lock (this)
+                lock (syncroot)
                 {
                     if (jukebox != null) return jukebox;
 

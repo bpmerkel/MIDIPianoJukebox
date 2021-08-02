@@ -14,10 +14,10 @@ namespace MIDIPianoJukebox.Data
         public string Library { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
         public DateTime AddedUtc { get; set; } = DateTime.UtcNow;
-        public int Plays { get; set; } = 0;
-        public float Rating { get; set; } = 0f;
-        public int Durationms { get; set; } = 0;
-        public int Tracks { get; set; } = 0;
+        public int Plays { get; set; }
+        public float Rating { get; set; }
+        public int Durationms { get; set; }
+        public int Tracks { get; set; }
         [BsonIgnore] public TimeSpan Duration => TimeSpan.FromMilliseconds(Durationms);
 
         public bool Equals([AllowNull] Tune x, [AllowNull] Tune y) => x?.ID == y?.ID;
@@ -36,7 +36,7 @@ namespace MIDIPianoJukebox.Data
     {
         [BsonId] public ObjectId ID { get; set; }
         public string Name { get; set; }
-        public int Plays { get; set; } = 0;
+        public int Plays { get; set; }
         [BsonRef(nameof(Tune))]
         public List<Tune> Tunes { get; set; } = new List<Tune>();
         public bool Equals([AllowNull] Playlist x, [AllowNull] Playlist y) => x?.ID == y?.ID;
@@ -62,7 +62,7 @@ namespace MIDIPianoJukebox.Data
 
         public event EventHandler ProgressChanged;
 
-        private double _progress = 0d;
+        private double _progress;
         public double Progress
         {
             get => _progress;

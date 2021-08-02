@@ -11,11 +11,11 @@ namespace MIDIPianoJukebox.Data
 {
     public partial class JukeboxService : IDisposable
     {
-        private MidiPlayer currentplayer = null;
-        private IMidiOutput outputDevice = null;
+        private MidiPlayer currentplayer;
+        private IMidiOutput outputDevice;
         public event EventHandler ReadyToPlayNext;
         readonly SynchronizationContext main = SynchronizationContext.Current;
-        bool isStopping = false;
+        bool isStopping;
 
         private void PlayPlayer()
         {

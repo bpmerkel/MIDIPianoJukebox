@@ -23,3 +23,6 @@ csharp_style_var_when_type_is_apparent = false:none
 
 # CA1307: Specify StringComparison
 dotnet_diagnostic.CA1307.severity = none
+
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = silent
