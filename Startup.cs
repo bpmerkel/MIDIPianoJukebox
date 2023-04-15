@@ -1,11 +1,7 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using MatBlazor;
-using System.Net.Http;
-using MIDIPianoJukebox.Data;
-using EmbeddedBlazorContent;
+// This file is used by Code Analysis to maintain SuppressMessage
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given
+// a specific target and scoped to a namespace, type, member, etc.
 
 namespace MIDIPianoJukebox;
 
@@ -47,7 +43,7 @@ public class Startup
         }
 
         app.UseStaticFiles();
-        app.UseEmbeddedBlazorContent(typeof(MatBlazor.BaseMatComponent).Assembly);
+        app.UseEmbeddedBlazorContent(typeof(BaseMatComponent).Assembly);
         app.UseRouting();
         app.UseEndpoints(endpoints =>
         {

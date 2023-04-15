@@ -1,11 +1,7 @@
-﻿using Commons.Music.Midi;
-using Commons.Music.Midi.WinMM;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Threading;
+﻿// This file is used by Code Analysis to maintain SuppressMessage
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given
+// a specific target and scoped to a namespace, type, member, etc.
 
 namespace MIDIPianoJukebox.Data;
 
