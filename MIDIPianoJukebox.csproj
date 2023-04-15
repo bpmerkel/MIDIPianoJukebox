@@ -30,9 +30,9 @@
 
   <ItemGroup>
     <PackageReference Include="EmbeddedBlazorContent" Version="1.10.0" />
-    <PackageReference Include="LiteDB" Version="5.0.15" />
+    <PackageReference Include="LiteDB" Version="5.0.16" />
     <PackageReference Include="managed-midi" Version="1.10.1" />
-    <PackageReference Include="MatBlazor" Version="2.8.0" />
+    <PackageReference Include="MatBlazor" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup>
