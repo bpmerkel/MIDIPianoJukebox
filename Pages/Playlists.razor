@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 @inject JukeboxService JukeboxService
 
-@if (jukebox == null)
+@if (!JukeboxService.Loaded)
 {
     <div style="text-align: center; align-content: center; vertical-align: middle">
         <em>Loading...</em><br />
@@ -24,14 +24,16 @@ else
             {
                 if (!isSelected.Any())
                 {
-                    foreach (var p in jukebox.Playlists)
+                    foreach (var p in JukeboxService.Playlists)
                     {
                         // are all the tunes shown in the table, also in this playlist?
                         if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)))
+                        {
                             isSelected.Add(p, true);
+                        }
                     }
                 }
-                foreach (var p in jukebox.Playlists.OrderBy(pp => pp.Name))
+                foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
                 {
                     isSelected.TryGetValue(p, out bool selected);
                     <MatButton Raised="@selected" Outlined="@(!selected)" OnClick="@(m => toggleSelected(p))">@p.Name</MatButton>
@@ -49,17 +51,21 @@ else
             <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
                 <div class="mat-elevation-z4" style="padding: 10px;">
                     <MatStringField Value="@playlist" Label="Search" Outlined="true" ValueChanged="@(s => doSearch(s))"></MatStringField>
-                    @{
-                        var exists = jukebox.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
+                    @if (playlist != null)
+                    {
+                        var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
                         <MatButton Disabled="@exists" Raised="true" OnClick="@(m => createPlaylist())">Create Playlist</MatButton>
                         <MatButton Disabled="@(!exists)" Raised="true" OnClick="@(m => clearPlaylist())">Clear Playlist</MatButton>
                     }
-                    <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(e => { playlistDialogIsOpen = true; })" Disabled="@(!Tunes.Any())">Align</MatButton>
+                    @if (Tunes != null)
+                    {
+                        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(e => { playlistDialogIsOpen = true; })" Disabled="@(!Tunes.Any())">Align</MatButton>
+                    }
                     @($"{Tunes?.Count:#,##0}")
                     <div>
                         <a href="@($"/library/orphan")" class="navItem">Orphans</a>,
                         @{
-                            var pl = jukebox.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList();
+                            var pl = JukeboxService.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList();
                             var last = pl.Count - 1;
                             var comma = ", ";
                             foreach (var p in pl.Select((p, i) => new { p, delim = i < last ? comma : string.Empty }))
@@ -71,9 +77,12 @@ else
                     <NameNav Path="@NavigationManager.Uri"></NameNav>
                 </div>
                 <div class="mat-elevation-z4 scrollable70">
-                    @foreach (var tune in Tunes?.Take(100))
+                    @if (Tunes != null)
                     {
-                        <TuneCard Tune="@tune"></TuneCard>
+                        foreach (var tune in Tunes.Take(100))
+                        {
+                            <TuneCard Tune="@tune"></TuneCard>
+                        }
                     }
                 </div>
             </div>
@@ -87,48 +96,47 @@ else
     [Parameter] public string tag { get; set; }
     bool playlistDialogIsOpen = false;
     List<Tune> Tunes;
-    Jukebox jukebox;
-    Dictionary<Data.Playlist, bool> isSelected = new Dictionary<Data.Playlist, bool>();
+    Dictionary<Data.Playlist, bool> isSelected = new();
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         NavigationManager.LocationChanged += (s, e) => doNavTo();
-        jukebox = await JukeboxService.GetJukeboxAsync();
+        await JukeboxService.GetJukeboxAsync();
         doNavTo();
     }
 
     protected void doNavTo()
     {
-        if (jukebox == null) return;
+        if (!JukeboxService.Loaded) return;
 
         if (!string.IsNullOrWhiteSpace(library))
         {
             if (library.Equals("all", StringComparison.CurrentCultureIgnoreCase))
             {
                 playlist = "All";
-                Tunes = jukebox.Tunes;
+                Tunes = JukeboxService.Tunes;
             }
             else if (library.Equals("orphan", StringComparison.CurrentCultureIgnoreCase))
             {
                 playlist = "Orphans";
                 var comparer = new Tune();
-                var pltunes = jukebox.Playlists.SelectMany(p => p.Tunes).Distinct(comparer);
-                Tunes = jukebox.Tunes.Except(pltunes, comparer).ToList();
+                var pltunes = JukeboxService.Playlists.SelectMany(p => p.Tunes).Distinct(comparer);
+                Tunes = JukeboxService.Tunes.Except(pltunes, comparer).ToList();
             }
             else
             {
                 playlist = library;
-                Tunes = jukebox.Libraries
-                    .Where(g => g.Name.Equals(library, StringComparison.CurrentCultureIgnoreCase))
-                    .SelectMany(lib => lib.Tunes)
+                Tunes = JukeboxService.Tunes
+                    .Where(t => t.Library != null)
+                    .Where(t => t.Library.Equals(library, StringComparison.CurrentCultureIgnoreCase))
                     .ToList();
             }
         }
         else if (!string.IsNullOrWhiteSpace(tag))
         {
             playlist = tag;
-            Tunes = jukebox.Tunes
+            Tunes = JukeboxService.Tunes
                 .Where(t => t.Tags.Any(tag => tag.Equals(tag, StringComparison.CurrentCultureIgnoreCase))
                         || (t.Name?.StartsWith(tag, StringComparison.CurrentCultureIgnoreCase) ?? false))
                 .ToList();
@@ -137,13 +145,13 @@ else
         {
             if (string.IsNullOrWhiteSpace(playlist))
             {
-                playlist = jukebox.Playlists
+                playlist = JukeboxService.Playlists
                     .OrderBy(p => p.Tunes?.Count ?? 0)
                     .Select(p => p.Name)
                     .FirstOrDefault();
             }
 
-            var p = jukebox.Playlists.FirstOrDefault(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
+            var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
             if (p != null)
             {
                 Tunes = p.Tunes;
@@ -169,7 +177,7 @@ else
         if (string.IsNullOrWhiteSpace(search)) return;
         if (search.Equals(playlist, StringComparison.CurrentCultureIgnoreCase)) return;
         playlist = search;
-        Tunes = jukebox.Tunes
+        Tunes = JukeboxService.Tunes
             .Where(t => t.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase))
                     || (t.Name?.StartsWith(search, StringComparison.CurrentCultureIgnoreCase) ?? false))
             .ToList();
@@ -179,10 +187,10 @@ else
     protected void createPlaylist()
     {
         // if a new playlist is requested, add it
-        if (!string.IsNullOrWhiteSpace(playlist) && !jukebox.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase)))
+        if (!string.IsNullOrWhiteSpace(playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase)))
         {
             var p = new Data.Playlist { Name = toTitleCase(playlist), ID = ObjectId.NewObjectId(), Tunes = Tunes };
-            jukebox.Playlists.Add(p);
+            JukeboxService.Playlists.Add(p);
             JukeboxService.SavePlaylist(p);
             StateHasChanged();
         }
@@ -201,7 +209,7 @@ else
         // get each playlist in isSelected and add all tunes to them
         foreach (var entry in isSelected)
         {
-            var playlist = jukebox.Playlists.FirstOrDefault(p => p.ID == entry.Key.ID);
+            var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.ID == entry.Key.ID);
             if (entry.Value)
             {
                 playlist.Tunes = playlist.Tunes.Union(Tunes, new Tune()).OrderBy(t => t.Name).ToList();

@@ -1,31 +1,11 @@
 ﻿@using MIDIPianoJukebox.Data
 
-<MatCard Class="mat-layout-grid  mat-elevation-z4">
+<MatCard Class="mat-layout-grid mat-elevation-z4">
     <MatCardContent Class="mat-layout-grid-inner">
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             <h3>@Tune.Name</h3>
         </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
-            <span class="topLabel">Library</span><br />
-            <a href="@($"/library/{Tune.Library}")" class="tagLink">@Tune.Library</a>
-        </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-3">
-            <span class="topLabel">Duration</span><br />@Tune.Duration.ToString("m\\:ss")
-        </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
-            <span class="topLabel">Tracks</span><br />@Tune.Tracks
-        </div>
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
-            <span class="topLabel">Plays</span><br />@Tune.Plays
-        </div>
-        @if (!OnRatingChanged.HasDelegate)
-        {
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
-                <span class="topLabel">Rating</span><br />@Tune.Rating
-            </div>
-        }
-        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-            <TagList Tune="@Tune"></TagList>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
             @if (OnRatingChanged.HasDelegate)
             {
                 <RatingsHalf Rating="@Tune.Rating" RatingChanged="@(r => doRatingChanged(Tune, r))"></RatingsHalf>
@@ -39,6 +19,31 @@
                 <MatIconButton Icon="@MatIconNames.Remove_from_queue" OnClick="@(_ => doDequeue())" title="Remove from Queue" Class="no-padding"></MatIconButton>
             }
         </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+            <span class="topLabel">Library</span><br />
+            <a href="@($"/library/{Tune.Library}")" class="tagLink">@Tune.Library</a>
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+            <span class="topLabel">Duration</span><br />@Tune.Duration.ToString("m\\:ss")
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+            <span class="topLabel">Tracks</span><br />@Tune.Tracks
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+            <span class="topLabel">Complexity</span><br />@Tune.Complexity
+        </div>
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+            <span class="topLabel">Plays</span><br />@Tune.Plays
+        </div>
+        @if (!OnRatingChanged.HasDelegate)
+        {
+            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-2">
+                <span class="topLabel">Rating</span><br />@Tune.Rating
+            </div>
+        }
+        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
+            <TagList Tune="@Tune"></TagList>
+        </div>
     </MatCardContent>
 </MatCard>
 
@@ -48,15 +53,8 @@
     [Parameter] public EventCallback<Tune> OnEnqueue { get; set; }
     [Parameter] public EventCallback<float> OnRatingChanged { get; set; }
 
-    protected async void doEnqueue()
-    {
-        await OnEnqueue.InvokeAsync(Tune);
-    }
-
-    protected async void doDequeue()
-    {
-        await OnDequeue.InvokeAsync(Tune);
-    }
+    protected async void doEnqueue() => await OnEnqueue.InvokeAsync(Tune);
+    protected async void doDequeue() => await OnDequeue.InvokeAsync(Tune);
 
     protected async void doRatingChanged(Tune t, float rating)
     {
