@@ -63,16 +63,14 @@ else
                     }
                     @($"{Tunes?.Count:#,##0}")
                     <div>
-                        <a href="@($"/library/orphan")" class="navItem">Orphans</a>,
                         @{
-                            var pl = JukeboxService.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList();
-                            var last = pl.Count - 1;
                             var comma = ", ";
-                            foreach (var p in pl.Select((p, i) => new { p, delim = i < last ? comma : string.Empty }))
+                            foreach (var p in JukeboxService.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList())
                             {
-                                <a href="@($"/playlists/{p.p.Name}")" class="navItem">@p.p.Name&nbsp;(@($"{p.p.Tunes.Count:#,##0}"))</a>@p.delim
+                                <a href="/playlists/@p.Name" class="navItem">@(p.Name)&nbsp;(@p.Tunes.Count.ToString("#,##0"))</a>@comma
                             }
                         }
+                        <a href="/library/orphan" class="navItem">Orphans</a>
                     </div>
                     <NameNav Path="@NavigationManager.Uri"></NameNav>
                 </div>
@@ -122,7 +120,7 @@ else
                 playlist = "Orphans";
                 var comparer = new Tune();
                 var pltunes = JukeboxService.Playlists.SelectMany(p => p.Tunes).Distinct(comparer);
-                Tunes = JukeboxService.Tunes.Except(pltunes, comparer).ToList();
+                Tunes = JukeboxService.Tunes.Except(pltunes, comparer).Where(t => t.Durationms > 0).ToList();
             }
             else
             {

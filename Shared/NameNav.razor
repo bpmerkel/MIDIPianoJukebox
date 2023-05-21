@@ -2,12 +2,14 @@
     <a href="@(Path)" class="alphaLink">ALL</a>
     @foreach (var start in nav)
     {
-        <a href="@($"{Path}?start={start}")" class="alphaLink">@start</a>
+        <a href="@($"{Path}?start={start}")" class="alphaLink">&nbsp;@start</a>
     }
 </div>
 
 @code {
-    private static string[] nav = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".Select(c => c.ToString()).ToArray();
+    private static string[] nav = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        .Select(c => c.ToString())
+        .ToArray();
     private string _path;
 
     [Parameter]
