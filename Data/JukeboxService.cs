@@ -125,8 +125,8 @@ public class JukeboxService: IDisposable
             using var db = new LiteRepository(cxstring);
             files.AsParallel().ForAll(file =>
             {
-                var subpath = file.FullName.Substring(Settings.MIDIPath.Length + 1);
-                var library = subpath.Contains("\\") ? subpath.Substring(0, subpath.IndexOf("\\")) : subpath;
+                var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
+                var library = subpath.Contains('\\') ? subpath[..subpath.IndexOf('\\')] : subpath;
                 var name = Path.GetFileNameWithoutExtension(file.Name);
                 var tags = new List<string> { Path.GetFileName(file.DirectoryName), library };
                 var tracksCount = 0;
@@ -323,37 +323,37 @@ public class JukeboxService: IDisposable
             var music = GetMusic();
             if (music != null)
             {
-                outputDevice = getDevice();
+                outputDevice = GetDevice();
                 CurrentPlayer = new MidiPlayer(music, outputDevice);
                 TotalTime = CurrentPlayer.GetTotalPlayTimeMilliseconds();
                 CurrentTime = TimeSpan.FromMilliseconds(0);
                 RemainingTime = TimeSpan.FromMilliseconds(TotalTime);
-                CurrentPlayer.PlaybackCompletedToEnd += player_Finished;
-                CurrentPlayer.EventReceived += player_EventReceived;
+                CurrentPlayer.PlaybackCompletedToEnd += Player_Finished;
+                CurrentPlayer.EventReceived += Player_EventReceived;
                 CurrentPlayer.Play();
             }
             else
             {
                 // found a missing/bad file; so signal move ahead
-                signal_next();
+                Signal_next();
             }
         }
     }
 
-    private void player_Finished()
+    private void Player_Finished()
     {
         // will need this to signal next tune in the queue
         Tune.Plays += 1;
-        signal_next();
+        Signal_next();
     }
 
-    private void signal_next()
+    private void Signal_next()
     {
         // will need this to signal next tune in the queue
         main.Post(state => ReadyToPlayNext?.Invoke(this, new EventArgs()), null);
     }
 
-    private void player_EventReceived(MidiEvent m)
+    private void Player_EventReceived(MidiEvent m)
     {
         if (CurrentPlayer == null) return;
         if (CurrentPlayer.State != PlayerState.Playing) return;
@@ -384,8 +384,8 @@ public class JukeboxService: IDisposable
             CurrentPlayer.Stop();
             // spin wait until stopped
             while (CurrentPlayer.State != PlayerState.Stopped) Thread.Sleep(100);
-            CurrentPlayer.EventReceived -= player_EventReceived;
-            CurrentPlayer.PlaybackCompletedToEnd -= player_Finished;
+            CurrentPlayer.EventReceived -= Player_EventReceived;
+            CurrentPlayer.PlaybackCompletedToEnd -= Player_Finished;
             Progress = 0;
             CurrentTime = TimeSpan.FromMilliseconds(0);
             RemainingTime = TimeSpan.FromMilliseconds(TotalTime);
@@ -453,7 +453,7 @@ public class JukeboxService: IDisposable
         return wmm.Outputs.ToList();
     }
 
-    public IMidiOutput getDevice()
+    public IMidiOutput GetDevice()
     {
         var wmm = new WinMMMidiAccess();
         var dev = wmm.OpenOutputAsync(Settings.OutputDevice ?? "0").Result;

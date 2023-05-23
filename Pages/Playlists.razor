@@ -72,7 +72,7 @@ else
                         }
                         <a href="/library/orphan" class="navItem">Orphans</a>
                     </div>
-                    <NameNav Path="@NavigationManager.Uri"></NameNav>
+                    <NameNav Path="@(new Uri(NavigationManager.Uri).LocalPath)"></NameNav>
                 </div>
                 <div class="mat-elevation-z4 scrollable70">
                     @if (Tunes != null)
