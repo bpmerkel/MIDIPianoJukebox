@@ -8,6 +8,8 @@
     <Platforms>AnyCPU;x86</Platforms>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <ApplicationIcon>wwwroot\favicon.ico</ApplicationIcon>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,7 +32,7 @@
 
   <ItemGroup>
     <PackageReference Include="EmbeddedBlazorContent" Version="1.10.0" />
-    <PackageReference Include="LiteDB" Version="5.0.16" />
+    <PackageReference Include="LiteDB" Version="5.0.17" />
     <PackageReference Include="managed-midi" Version="1.10.1" />
     <PackageReference Include="MatBlazor" Version="2.10.0" />
   </ItemGroup>
