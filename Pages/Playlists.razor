@@ -1,12 +1,13 @@
 @page "/playlists"
 @page "/playlists/{playlist}"
+@page "/search/{start}"
 @page "/library/{library}"
 @page "/tag/{tag}"
-@using LiteDB
-@using MIDIPianoJukebox.Data
-@using Microsoft.AspNetCore.WebUtilities @*for QueryHelpers*@
 @inject NavigationManager NavigationManager
 @inject JukeboxService JukeboxService
+@inject IDialogService DialogService
+@using LiteDB
+@using MIDIPianoJukebox.Data
 
 @if (!JukeboxService.Loaded)
 {
@@ -17,91 +18,121 @@
 }
 else
 {
-    <MatDialog @bind-IsOpen="@playlistDialogIsOpen" Style="width: 90vw; max-width: 90vw">
-        <MatDialogTitle>Align to Playlists</MatDialogTitle>
-        <MatDialogContent>
-            @if (playlistDialogIsOpen)
+    <div>
+        @{
+            var playlists = JukeboxService.Playlists
+            .OrderBy(playlist => playlist.Name)
+            .Select((playlist, i) => new { playlist, i })
+            .ToList();
+            foreach (var p in playlists)
             {
-                if (!isSelected.Any())
-                {
-                    foreach (var p in JukeboxService.Playlists)
-                    {
-                        // are all the tunes shown in the table, also in this playlist?
-                        if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)))
-                        {
-                            isSelected.Add(p, true);
-                        }
-                    }
-                }
-                foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
-                {
-                    isSelected.TryGetValue(p, out bool selected);
-                    <MatButton Raised="@selected" Outlined="@(!selected)" OnClick="@(m => toggleSelected(p))">@p.Name</MatButton>
-                }
+                <a href="/playlists/@p.playlist.Name" class="navItem">@(p.playlist.Name)&nbsp;(@p.playlist.Tunes.Count.ToString("#,##0"))</a>
+                @(p.i == JukeboxService.Playlists.Count - 1 ? string.Empty : ", ")
             }
-        </MatDialogContent>
-        <MatDialogActions>
-            <MatButton OnClick="@(e => doSavePlaylist())">Save</MatButton>
-            <MatButton OnClick="@(e => { playlistDialogIsOpen = false; isSelected.Clear(); })">Cancel</MatButton>
-        </MatDialogActions>
-    </MatDialog>
-
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <div class="mat-elevation-z4" style="padding: 10px;">
-                    <MatStringField Value="@playlist" Label="Search" Outlined="true" ValueChanged="@(s => doSearch(s))"></MatStringField>
-                    @if (playlist != null)
-                    {
-                        var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
-                        <MatButton Disabled="@exists" Raised="true" OnClick="@(m => createPlaylist())">Create Playlist</MatButton>
-                        <MatButton Disabled="@(!exists)" Raised="true" OnClick="@(m => clearPlaylist())">Clear Playlist</MatButton>
-                    }
-                    @if (Tunes != null)
-                    {
-                        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(e => { playlistDialogIsOpen = true; })" Disabled="@(!Tunes.Any())">Align</MatButton>
-                    }
-                    @($"{Tunes?.Count:#,##0}")
-                    <div>
-                        @{
-                            var comma = ", ";
-                            foreach (var p in JukeboxService.Playlists.Where(pp => pp.Tunes.Count > 0).OrderBy(pp => pp.Name).ToList())
-                            {
-                                <a href="/playlists/@p.Name" class="navItem">@(p.Name)&nbsp;(@p.Tunes.Count.ToString("#,##0"))</a>@comma
-                            }
-                        }
-                        <a href="/library/orphan" class="navItem">Orphans</a>
-                    </div>
-                    <NameNav Path="@(new Uri(NavigationManager.Uri).LocalPath)"></NameNav>
-                </div>
-                <div class="mat-elevation-z4 scrollable70">
-                    @if (Tunes != null)
-                    {
-                        foreach (var tune in Tunes.Take(100))
-                        {
-                            <TuneCard Tune="@tune"></TuneCard>
-                        }
-                    }
-                </div>
-            </div>
-        </div>
+        }
     </div>
+    <div class="alphaList">
+        @foreach (var c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        {
+            <a href="@($"/search/{c}")" class="alphaLink">&nbsp;@c</a>
+        }
+        <a href="/library/ALL" class="alphaLink">&nbsp;ALL</a>
+        <a href="/library/orphan" class="navItem">&nbsp;ORPHANS</a>
+    </div>
+    <MudDataGrid Items="@Tunes" T="Tune" MultiSelection="true"
+                 Hideable="true" Hover="true" Dense="true" Striped="true"
+                 Groupable="true" GroupExpanded="true"
+                 SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@quickFilter"
+                 Virtualize="true" FixedHeader="true" Height="500px"
+                 RowClick="@RowClicked" RowContextMenuClick="@RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Tunes</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.body1"> @($"{Tunes?.Count:#,##0}")</MudText>
+            <MudTextField @bind-Value="@playlist" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+            <MudCheckBox @bind-Checked="@SearchTags" Label="Search Tags" Color="Color.Primary" />
+
+            @if (playlist != null)
+            {
+                var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
+                <MudButton Disabled="@exists" OnClick="@(m => createPlaylist())">Create Playlist</MudButton>
+                <MudButton Disabled="@(!exists)" OnClick="@(m => clearPlaylist())">Clear Playlist</MudButton>
+            }
+            @if (Tunes != null)
+            {
+                <MudButton StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(e => openDialog())" Disabled="@(!Tunes.Any())">Align</MudButton>
+            }
+        </ToolBarContent>
+        <Columns>
+            <SelectColumn T="Tune" />
+            <PropertyColumn Property="tune => tune.Name" />
+            <TemplateColumn CellClass="d-flex justify-end" Title="Rating" SortBy="@(item => item.Rating)">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="tune => tune.Plays" />
+            <PropertyColumn Property="tune => tune.Duration" Format="mm\:ss" />
+            <PropertyColumn Property="tune => tune.Tracks" />
+            <PropertyColumn Property="tune => tune.Complexity" />
+        </Columns>
+        <ChildRowContent>
+            <TagList Tune="@context.Item" />
+        </ChildRowContent>
+        <PagerContent>
+            <MudDataGridPager T="Tune" />
+        </PagerContent>
+    </MudDataGrid>
 }
 
 @code {
     [Parameter] public string library { get; set; }
     [Parameter] public string playlist { get; set; }
+    [Parameter] public string start { get; set; }
     [Parameter] public string tag { get; set; }
-    bool playlistDialogIsOpen = false;
     List<Tune> Tunes;
-    Dictionary<Data.Playlist, bool> isSelected = new();
+    bool SearchTags = true;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
         NavigationManager.LocationChanged += (s, e) => doNavTo();
         await JukeboxService.GetJukeboxAsync();
         doNavTo();
+        await base.OnInitializedAsync();
+    }
+
+    // quick filter
+    bool quickFilter(Tune tune)
+    {
+        if (string.IsNullOrWhiteSpace(playlist))
+            return true;
+
+        if (tune.Name.Contains(playlist, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (tune.Tags.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)))
+            return true;
+
+        return false;
+    }
+
+    // DataGrid events
+    void RowClicked(DataGridRowClickEventArgs<Tune> args)
+    {
+        //RowClick, Index = {args.RowIndex}, Data = System.Text.Json.JsonSerializer.Serialize(args.Item)
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<Tune> args)
+    {
+        //RowRightClick, Index = {args.RowIndex}, Data = System.Text.Json.JsonSerializer.Serialize(args.Item)
+    }
+
+    void SelectedItemsChanged(HashSet<Tune> tunes)
+    {
+        //SelectedItemsChanged, Data = System.Text.Json.JsonSerializer.Serialize(items)
     }
 
     protected void doNavTo()
@@ -139,45 +170,34 @@ else
                         || (t.Name?.StartsWith(tag, StringComparison.CurrentCultureIgnoreCase) ?? false))
                 .ToList();
         }
-        else
+        else if (!string.IsNullOrWhiteSpace(playlist))
         {
-            if (string.IsNullOrWhiteSpace(playlist))
-            {
-                playlist = JukeboxService.Playlists
-                    .OrderBy(p => p.Tunes?.Count ?? 0)
-                    .Select(p => p.Name)
-                    .FirstOrDefault();
-            }
-
             var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
             if (p != null)
             {
                 Tunes = p.Tunes;
             }
         }
-
-        // Parse for any querystring
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("start", out var token))
+        else if (!string.IsNullOrWhiteSpace(start))
         {
-            var navstart = token.First();
+            if (Tunes == null || !Tunes.Any())
+            {
+                Tunes = JukeboxService.Tunes;
+            }
             Tunes = Tunes
-                .Where(t => t.Name?.StartsWith(navstart, StringComparison.CurrentCultureIgnoreCase) ?? false)
+                .Where(t => t.Name?.StartsWith(start, StringComparison.CurrentCultureIgnoreCase) ?? false)
                 .ToList();
         }
 
-        isSelected.Clear();
         StateHasChanged();
     }
 
-    protected void doSearch(string search)
+    protected void doSearch()
     {
-        if (string.IsNullOrWhiteSpace(search)) return;
-        if (search.Equals(playlist, StringComparison.CurrentCultureIgnoreCase)) return;
-        playlist = search;
+        if (string.IsNullOrWhiteSpace(playlist)) return;
         Tunes = JukeboxService.Tunes
-            .Where(t => t.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase))
-                    || (t.Name?.StartsWith(search, StringComparison.CurrentCultureIgnoreCase) ?? false))
+            .Where(t => (SearchTags && t.Tags.Any(tag => tag.Contains(playlist, StringComparison.CurrentCultureIgnoreCase)))
+                    || (t.Name?.StartsWith(playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
             .ToList();
         StateHasChanged();
     }
@@ -197,48 +217,25 @@ else
     protected void clearPlaylist()
     {
         JukeboxService.ClearPlaylist(playlist);
-        StateHasChanged();
-    }
-
-    protected void doSavePlaylist()
-    {
-        if (Tunes.Count == 0) return;
-
-        // get each playlist in isSelected and add all tunes to them
-        foreach (var entry in isSelected)
-        {
-            var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.ID == entry.Key.ID);
-            if (entry.Value)
-            {
-                playlist.Tunes = playlist.Tunes.Union(Tunes, new Tune()).OrderBy(t => t.Name).ToList();
-            }
-            else
-            {
-                // subtract from these!
-                playlist.Tunes = playlist.Tunes.Except(Tunes, new Tune()).OrderBy(t => t.Name).ToList();
-            }
-            JukeboxService.SavePlaylist(playlist);
-        }
-
-        // clear the isSelected list
-        isSelected.Clear();
-
-        playlistDialogIsOpen = false;
-        StateHasChanged();
-    }
-
-    protected void toggleSelected(Data.Playlist playlist)
-    {
-        if (isSelected.ContainsKey(playlist))
-        {
-            isSelected[playlist] = !isSelected[playlist];
-        }
-        else
-        {
-            isSelected.Add(playlist, true);
-        }
+        playlist = null;
         StateHasChanged();
     }
 
     protected string toTitleCase(string input) => System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input);
+
+    protected void openDialog()
+    {
+        var parameters = new DialogParameters<AlignToPlaylist>();
+        parameters.Add(x => x.Tunes, Tunes);
+
+        DialogService.Show<AlignToPlaylist>("Align", parameters, new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                CloseButton = true,
+                DisableBackdropClick = true,
+                NoHeader = false,
+                Position = DialogPosition.Center,
+                CloseOnEscapeKey = true
+            });
+    }
 }

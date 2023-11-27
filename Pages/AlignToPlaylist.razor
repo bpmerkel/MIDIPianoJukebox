@@ -1,0 +1,75 @@
+﻿@inject JukeboxService JukeboxService
+
+<MudDialog Style="width: 90vw; max-width: 90vw">
+    <TitleContent>
+        <MudText Typo="Typo.h4" Color="Color.Warning">Align to Playlists</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (!isSelected.Any())
+        {
+            foreach (var p in JukeboxService.Playlists)
+            {
+                // are all the tunes shown in the table, also in this playlist?
+                if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)))
+                {
+                    isSelected.Add(p, true);
+                }
+            }
+        }
+
+        @foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
+        {
+            isSelected.TryGetValue(p, out bool selected);
+            <MudButton Variant="@(selected ? Variant.Filled : Variant.Outlined)" OnClick="@(m => toggleSelected(p))">@p.Name</MudButton>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(e => doSavePlaylist())">Save</MudButton>
+        <MudButton OnClick="@(e => { isSelected.Clear(); MudDialog.Cancel(); })">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public List<Tune> Tunes { get; set; }
+    Dictionary<Data.Playlist, bool> isSelected = new();
+
+    protected void doSavePlaylist()
+    {
+        if (Tunes.Count == 0) return;
+
+        // get each playlist in isSelected and add all tunes to them
+        foreach (var entry in isSelected)
+        {
+            var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.ID == entry.Key.ID);
+            if (entry.Value)
+            {
+                playlist.Tunes = playlist.Tunes.Union(Tunes, new Tune()).OrderBy(t => t.Name).ToList();
+            }
+            else
+            {
+                // subtract from these!
+                playlist.Tunes = playlist.Tunes.Except(Tunes, new Tune()).OrderBy(t => t.Name).ToList();
+            }
+            JukeboxService.SavePlaylist(playlist);
+        }
+
+        // clear the isSelected list
+        isSelected.Clear();
+        MudDialog.Close(DialogResult.Ok(true));
+        StateHasChanged();
+    }
+
+    protected void toggleSelected(Data.Playlist playlist)
+    {
+        if (isSelected.ContainsKey(playlist))
+        {
+            isSelected[playlist] = !isSelected[playlist];
+        }
+        else
+        {
+            isSelected.Add(playlist, true);
+        }
+        StateHasChanged();
+    }
+}

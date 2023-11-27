@@ -1,9 +1,8 @@
 @page "/"
 @page "/{Playlist}"
-
-@using MIDIPianoJukebox.Data
 @inject NavigationManager NavigationManager
 @inject JukeboxService JukeboxService
+@using MIDIPianoJukebox.Data
 
 @if (!JukeboxService.Loaded)
 {
@@ -14,74 +13,67 @@
 }
 else
 {
-    <div class="mat-layout-grid">
-        <div class="mat-layout-grid-inner">
-            <div class="mat-layout-grid-cell mat-layout-grid-cell-span-12">
-                <div class="mat-elevation-z4" style="padding: 10px;">
-                    <h3>@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</h3>
-                    <MatButton Icon="@MatIconNames.Shuffle" Raised="@Shuffle" Outlined="@(!Shuffle)" OnClick="@(m => Shuffle = !Shuffle)">Shuffle</MatButton>
-                    <MatButton Raised="true" Icon="@MatIconNames.Skip_next" OnClick="@(e => doPlayNext())" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MatButton>
-                    @if (JukeboxService.State == PlayerState.Playing)
-                    {
-                        <MatButton Raised="true" Icon="@MatIconNames.Pause_circle_filled" OnClick="@(e => doPause())">Pause</MatButton>
-                    }
-                    else if (JukeboxService.State == PlayerState.Paused)
-                    {
-                        <MatButton Raised="true" Icon="@MatIconNames.Play_circle_outline" OnClick="@(e => doPlay())">Resume</MatButton>
-                    }
+    <div style="padding: 10px;">
+        <h3>@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</h3>
+        <MudButton StartIcon="@Icons.Material.Filled.Shuffle" Variant="@(Shuffle ? Variant.Filled : Variant.Outlined)" OnClick="@(m => Shuffle = !Shuffle)">Shuffle</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="@(e => doPlayNext())" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
+        @if (JukeboxService.State == PlayerState.Playing)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.PauseCircleFilled" OnClick="@(e => doPause())">Pause</MudButton>
+        }
+        else if (JukeboxService.State == PlayerState.Paused)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.PlayCircleOutline" OnClick="@(e => doPlay())">Resume</MudButton>
+        }
 
-                    @if (JukeboxService.State != PlayerState.Stopped)
-                    {
-                        <MatButton Raised="true" Icon="@MatIconNames.Replay" OnClick="@(e => doReplay(0))" Disabled="@(!JukeboxService.Queue.Any())">Replay</MatButton>
-                        <MatButton Raised="true" Icon="@MatIconNames.Fast_forward" OnClick="@(e => doSkip(10_000))" Disabled="@(!JukeboxService.Queue.Any())">Skip 10</MatButton>
-                    }
+        @if (JukeboxService.State != PlayerState.Stopped)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.Replay" OnClick="@(e => doReplay(0))" Disabled="@(!JukeboxService.Queue.Any())">Replay</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.FastForward" OnClick="@(e => doSkip(10_000))" Disabled="@(!JukeboxService.Queue.Any())">Skip 10</MudButton>
+        }
 
-                    @if (JukeboxService.State == PlayerState.Stopped)
-                    {
-                        <span>Stopped</span>
-                    }
-                    else if (JukeboxService.State == PlayerState.Playing)
-                    {
-                        <span>Playing</span>
-                    }
-                    else if (JukeboxService.State == PlayerState.Paused)
-                    {
-                        <span>Paused</span>
-                    }
-                </div>
-                @if (JukeboxService.Tune != null)
-                {
-                    <div class="mat-layout-grid-inner mat-elevation-z4" style="padding: 10px">
-                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1 justify-right">
-                            @JukeboxService.CurrentTime.ToString("m\\:ss")
-                        </div>
-                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-10">
-                            <MatProgressBar Progress="@JukeboxService.Progress" Style="height: 18px"></MatProgressBar>
-                        </div>
-                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-1">
-                            @JukeboxService.RemainingTime.ToString("m\\:ss")
-                        </div>
-                    </div>
-                    <TuneCard Tune="@JukeboxService.Tune" OnRatingChanged="@(r => doRatingChanged(JukeboxService.Tune, r, true))"></TuneCard>
-                }
-                <div class="mat-elevation-z4" style="padding: 10px; margin-bottom: 10px;">
-                    <div>
-                        @{
-                            var pl = JukeboxService.Playlists
-                                .Where(pp => pp.Tunes.Count > 0)
-                                .OrderBy(pp => pp.Name)
-                                .ToList();
-                            var last = pl.Count - 1;
-                            var comma = ", ";
-                            foreach (var p in pl.Select((p, i) => new { p, delim = i < last ? comma : string.Empty }))
-                            {
-                                <a href="@($"/{p.p.Name}")" class="navItem">@p.p.Name&nbsp;(@($"{p.p.Tunes.Count:#,##0}"))</a>@p.delim
-                            }
-                        }
-                    </div>
-                </div>
+        @if (JukeboxService.State == PlayerState.Stopped)
+        {
+            <span>Stopped</span>
+        }
+        else if (JukeboxService.State == PlayerState.Playing)
+        {
+            <span>Playing</span>
+        }
+        else if (JukeboxService.State == PlayerState.Paused)
+        {
+            <span>Paused</span>
+        }
+    </div>
+    @if (JukeboxService.Tune != null)
+    {
+        <div style="padding: 10px">
+            <div class="justify-right">
+                @JukeboxService.CurrentTime.ToString("m\\:ss")
+            </div>
+            <div>
+                <MudProgressLinear Value="@JukeboxService.Progress" Size="Size.Small" />
+            </div>
+            <div>
+                @JukeboxService.RemainingTime.ToString("m\\:ss")
             </div>
         </div>
+        <TuneCard Tune="@JukeboxService.Tune" OnRatingChanged="@(r => doRatingChanged(JukeboxService.Tune, r, true))"></TuneCard>
+    }
+    <div style="padding: 10px; margin-bottom: 10px;">
+        @{
+            var pl = JukeboxService.Playlists
+                .Where(pp => pp.Tunes.Count > 0)
+                .OrderBy(pp => pp.Name)
+                .ToList();
+            var last = pl.Count - 1;
+            var comma = ", ";
+            foreach (var p in pl.Select((p, i) => new { p, delim = i < last ? comma : string.Empty }))
+            {
+                <a href="@($"/{p.p.Name}")" class="navItem">@p.p.Name&nbsp;(@($"{p.p.Tunes.Count:#,##0}"))</a>
+                @p.delim
+            }
+        }
     </div>
 }
 

@@ -11,24 +11,23 @@
 else
 {
     <h3>Settings</h3>
-    <div class="mat-elevation-z4" style="padding: 10px; white-space: nowrap;">
-        <MatTextField @bind-Value="@JukeboxService.Settings.MIDIPath" Label="MIDI Path" Outlined="true" Disabled="@processing"></MatTextField>
-        <MatButton Raised="true" Icon="@MatIconNames.Queue_music" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh</MatButton>
-        <MatButton Raised="true" Icon="@MatIconNames.Playlist_add_check" OnClick="@(_ => doDatabaseCleanse())" Disabled="@processing">Cleanse</MatButton>
-        <MatSelect Label="MIDI Output Device" Enhanced="true" Value="@JukeboxService.Settings.OutputDevice" TValue="string" ValueChanged="@doChangeOutputDevice">
+    <div style="padding: 10px; white-space: nowrap;">
+        <MudTextField @bind-Value="@JukeboxService.Settings.MIDIPath" Label="MIDI Path" Variant="Variant.Text" Disabled="@processing"></MudTextField>
+        <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh</MudButton>
+        <MudSelect Dense="true" T="string" Label="MIDI Output Device" Variant="Variant.Text" Value="@JukeboxService.Settings.OutputDevice" ValueChanged="@doChangeOutputDevice">
             @foreach (var od in JukeboxService.GetDevices())
             {
-                <MatOption Value="@od.Id">@od.Name</MatOption>
+                <MudSelectItem Value="@od.Id">@od.Name</MudSelectItem>
             }
-            <MatOption Value=@("refresh")>(Refresh List)</MatOption>
-        </MatSelect>
+            <MudSelectItem Value=@("refresh")>(Refresh List)</MudSelectItem>
+        </MudSelect>
     </div>
     
     <h3>Log</h3>
-    <div class="mat-elevation-z4" style="padding: 10px; overflow-y: scroll; height: calc(100vh - 310px)">
+    <div style="padding: 10px; overflow-y: scroll; height: calc(100vh - 310px)">
         @if (processing)
         {
-            <MatProgressBar Progress="@Progress"></MatProgressBar>
+            <MudProgressLinear Color="Color.Primary" Striped="true" Value="@Progress" Size="Size.Small" />
         }
         @foreach (var log in JukeboxService.Log)
         {
@@ -43,8 +42,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
         await JukeboxService.GetJukeboxAsync();
+        await base.OnInitializedAsync();
     }
 
     async void addLog(string msg)
@@ -59,25 +58,16 @@ else
         await base.InvokeAsync(StateHasChanged);
     }
 
-    protected async Task doDatabaseRefresh()
+    async Task doDatabaseRefresh()
     {
         processing = true;
         JukeboxService.SaveSettings();
         await JukeboxService.RefreshDatabaseAsync(msg => addLog(msg), prg => updateProgress(prg));
-        await base.InvokeAsync(StateHasChanged);
         processing = false;
+        await base.InvokeAsync(StateHasChanged);
     }
 
-    protected async Task doDatabaseCleanse()
-    {
-        processing = true;
-        JukeboxService.SaveSettings();
-        await JukeboxService.CleanseDatabase(msg => addLog(msg), prg => updateProgress(prg));
-        await base.InvokeAsync(StateHasChanged);
-        processing = false;
-    }
-
-    protected void doChangeOutputDevice(string sel)
+    void doChangeOutputDevice(string sel)
     {
         if (sel == "refresh")
         {

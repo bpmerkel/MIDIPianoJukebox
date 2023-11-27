@@ -2,7 +2,7 @@
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
-global using MatBlazor;
+global using MudBlazor;
 global using System.Net.Http;
 global using MIDIPianoJukebox.Data;
 global using EmbeddedBlazorContent;
@@ -17,7 +17,6 @@ global using System.Threading;
 global using LiteDB;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Diagnostics;
-global using System.Globalization;
 global using System.Text;
 global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;

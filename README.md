@@ -16,9 +16,9 @@ I first evaluated MIDI NuGet packages with LINQPad--to read through the MIDI fil
 Then ultimately to Play the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter to the Piano.
 
 Here are the major technologies for the solution:
-* .NET 6
-* ASP.NET Core 6
+* .NET 8
+* ASP.NET Core 8
 * Blazor (server-side)
-* MatBlazor Material UI Components
+* MudBlazor Material UI Components
 * LiteDB Document Database
     

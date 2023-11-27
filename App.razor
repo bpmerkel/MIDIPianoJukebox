@@ -3,21 +3,12 @@
     directive matching the current URI.
 *@
 
-<MatToastContainer />
-
-<MatThemeProvider Theme="@theme">
-    <Router AppAssembly=typeof(Startup).Assembly>
-        <Found Context="routeData">
-            <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
-        </Found>
-        <NotFound>
-            <h1>Page not found</h1>
-            <p>Sorry, but there's nothing here!</p>
-        </NotFound>
-    </Router>
-</MatThemeProvider>
-
-@code
-{
-    MatTheme theme = new MatTheme();
-}
+<Router AppAssembly=typeof(Startup).Assembly>
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <h1>Page not found</h1>
+        <p>Sorry, but there's nothing here!</p>
+    </NotFound>
+</Router>
