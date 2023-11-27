@@ -1,10 +1,12 @@
 namespace MIDIPianoJukebox.Data;
 
-public class JukeboxService: IDisposable
+public partial class JukeboxService : IDisposable
 {
     const string cxstring = "Filename=jukebox.db";
-    public bool Loaded { get; set; } = false;
+    private LiteRepository repo = new (cxstring);
     private readonly object syncroot = new();
+
+    public bool Loaded { get; set; } = false;
     public Settings Settings { get; set; } = new();
     public List<Playlist> Playlists { get; private set; }
     public List<Tune> Tunes { get; set; }
@@ -34,11 +36,10 @@ public class JukeboxService: IDisposable
         return Task.Run(() =>
         {
             lock (syncroot)
-            {
-                using var db = new LiteDatabase(cxstring);
-                var tunes = db.GetCollection<Tune>();
-                var playlists = db.GetCollection<Playlist>();
-                var settings = db.GetCollection<Settings>();
+            {              
+                var tunes = repo.Database.GetCollection<Tune>();
+                var playlists = repo.Database.GetCollection<Playlist>();
+                var settings = repo.Database.GetCollection<Settings>();
 
                 tunes.EnsureIndex(x => x.ID, true);
                 tunes.EnsureIndex(x => x.Filepath, true);
@@ -52,52 +53,13 @@ public class JukeboxService: IDisposable
 
                 Playlists = playlists.Include(p => p.Tunes).FindAll().Where(p => p != null).OrderBy(p => p.Name).ToList();
                 Tunes = tunes.FindAll().Where(t => t != null).OrderBy(t => t.Name).ToList();
-                Settings = settings.FindOne(q => true);
+                Settings = settings.FindOne(q => true) ?? new();
                 Loaded = true;
             }
         });
     }
 
     public static async Task AddLog(string msg) => await Task.Run(() => Log.Insert(0, $"{DateTime.Now:h:mm:ss}: {msg}")).ConfigureAwait(true);
-
-    public Task CleanseDatabase(Action<string> logger, Action<double> progress)
-    {
-        return Task.Run(() =>
-        {
-            logger($"Cleansing database {cxstring} for MIDI files in {Settings.MIDIPath}");
-            using var db = new LiteRepository(cxstring);
-
-            progress(.1d);
-
-            var todelete = db.Query<Tune>()
-                .ToEnumerable()
-                .AsParallel()
-                .Where(tune => !File.Exists(Path.Combine(Settings.MIDIPath, tune.Filepath)))
-                .ToList();
-
-            logger($"Found {todelete.Count:#,##0} Tunes that no longer exists under {Settings.MIDIPath}");
-
-            progress(.5d);
-
-            if (todelete.Any())
-            {
-                todelete
-                    .Select((tune, i) => new { tune, i })
-                    .ToList()
-                    .ForEach(e =>
-                    {
-                        db.Delete<Tune>(e.tune.ID);
-                        if (e.i % 10 == 0) progress(.5 + .5d * e.i / todelete.Count);
-                    });
-
-                db.Database.Rebuild();
-
-                Tunes = db.Query<Tune>().ToList();
-            }
-            progress(1d);
-            logger("Database cleanse complete");
-        });
-    }
 
     public Task RefreshDatabaseAsync(Action<string> logger, Action<double> progress)
     {
@@ -106,6 +68,8 @@ public class JukeboxService: IDisposable
             logger($"Updating database {cxstring} from MIDI files in {Settings.MIDIPath}");
             var files = new DirectoryInfo(Settings.MIDIPath)
                 .EnumerateFiles("*.mid", SearchOption.AllDirectories)
+                .Where(fi => fi.Length > 100)
+                .OrderBy(fi => fi.Name)
                 .ToList();
 
             var total = files.Count;
@@ -116,36 +80,31 @@ public class JukeboxService: IDisposable
             // use the file name as the name
             // capture the file path too
 
-            var re1 = new Regex(@"[\\\'\/\>\<;:\|\*?\@\=\^\!\`\~\#\u0000\u0001\u0003\u0004]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            var re2 = new Regex(@"[\s_-]+|\.$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            var reIgnore = new Regex(@"^(untitled|generated|played|written|words|\(brt\)|Copyright|http|www\.|e?mail|piano|acoustic|pedal|edition|sequenced|music\s+by|for\s+general|by\s+|words\s+|from\s+|arranged\s+|sung\s+|composed|dedicated|kmidi|melody|seq|track|this\s+and|1800S|midi\s+out|\S+\.com|\S+\.org|All Rights Reserved|with|when|just|Bdca426|dont|know|some|what|like|this|tk10|youre|Bwv001|Unnamed|comments|have|will|thing|come|v0100|midisource)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
+            var re1 = NotAllowed();
+            var re2 = ConvertToSpace();
+            var reIgnore = Ignore();
             var counter = 0;
-
-            using var db = new LiteRepository(cxstring);
+            var sw = Stopwatch.StartNew();
             files.AsParallel().ForAll(file =>
             {
-                var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
-                var library = subpath.Contains('\\') ? subpath[..subpath.IndexOf('\\')] : subpath;
-                var name = Path.GetFileNameWithoutExtension(file.Name);
-                var tags = new List<string> { Path.GetFileName(file.DirectoryName), library };
-                var tracksCount = 0;
-                var messagesCount = 0;
-                var eventsCount = 0;
-                var complexity = 0;
-                var duration = 0;
-
                 try
                 {
-                    var music = GetMusic(file.FullName);
-                    duration = music.GetTotalPlayTimeMilliseconds();
-                    tracksCount = music.Tracks.Count;
-                    var messages = music.Tracks.SelectMany(track => track.Messages).ToList();
-                    messagesCount = messages.Count;
+                    Interlocked.Increment(ref counter);
 
+                    var music = GetMusic(file.FullName);
+                    if (music == null) return;
+
+                    var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
+                    var library = subpath.Contains('\\') ? subpath[..subpath.IndexOf('\\')] : subpath;
+                    var name = Path.GetFileNameWithoutExtension(file.Name);
+                    var tags = new List<string> { Path.GetFileName(file.DirectoryName), library };
+                    var duration = music.GetTotalPlayTimeMilliseconds();
+                    var tracksCount = music.Tracks.Count;
+                    var messages = music.Tracks.SelectMany(track => track.Messages).ToList();
+                    var messagesCount = messages.Count;
                     var events = messages.Select(msg => msg.Event).ToList();
-                    eventsCount = events.Count;
-                    complexity = tracksCount * eventsCount / messagesCount;
+                    var eventsCount = events.Count;
+                    var complexity = tracksCount * eventsCount / messagesCount;
 
                     tags.AddRange(events
                         .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text || e.Msb == MidiMetaType.InstrumentName))
@@ -154,81 +113,73 @@ public class JukeboxService: IDisposable
                         .Select(m => re2.Replace(m, " ").Trim())
                         .Where(m => !reIgnore.IsMatch(m))
                     );
+
+                    // add/update the tune
+                    var tune = repo.Query<Tune>()
+                        .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
+                        .FirstOrDefault()
+                        ?? new Tune();
+                    tune.Name = name;
+                    tune.AddedUtc = DateTime.UtcNow;
+                    tune.Library = library;
+                    tune.Filepath = subpath;
+                    tune.Tracks = tracksCount;
+                    tune.Messages = messagesCount;
+                    tune.Events = eventsCount;
+                    tune.Complexity = complexity;
+                    tune.Durationms = duration;
+                    tune.Tags = tags
+                        .Where(m => !string.IsNullOrWhiteSpace(m))
+                        .Where(m => m.Length > 3)
+                        .Select(m => ToTitleCase(m))
+                        .OrderBy(m => m)
+                        .Distinct()
+                        .ToList();
+                    repo.Upsert(tune);
+
+                    if (counter % 1000 == 0 || counter == total)
+                    {
+                        var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
+                        var msleft = (total - counter) / rate; // = ms
+                        var eta = DateTime.Now.AddMilliseconds(msleft);
+                        logger($"{(total - counter):#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {library} / {name} ({tags.Count})");
+                        progress(100 * counter / total);
+                    }
                 }
                 catch (Exception ex)
                 {
                     logger($"Error on {file.FullName}: {ex.Message}");
                     return;
                 }
-
-                // add/update the tune
-                var tune = db.Query<Tune>()
-                    .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
-                    .FirstOrDefault()
-                    ?? new Tune();
-                tune.Name = name;
-                tune.AddedUtc = DateTime.UtcNow;
-                tune.Library = library;
-                tune.Filepath = subpath;
-                tune.Tracks = tracksCount;
-                tune.Messages = messagesCount;
-                tune.Events = eventsCount;
-                tune.Complexity = complexity;
-                tune.Durationms = duration;
-                tune.Tags = tags
-                    .Where(m => !string.IsNullOrWhiteSpace(m))
-                    .Where(m => m.Length > 3)
-                    .Select(m => ToTitleCase(m))
-                    .OrderBy(m => m)
-                    .Distinct()
-                    .ToList();
-                db.Upsert(tune);
-
-                var sw = Stopwatch.StartNew();
-                Interlocked.Increment(ref counter);
-                if (counter % 500 == 0 || counter == total)
-                {
-                    var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
-                    var msleft = (total - counter) / rate; // = ms
-                    var eta = DateTime.Now.AddMilliseconds(msleft);
-                    logger($"{(total - counter):#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {library} / {name}");
-                    progress(counter / total);
-                }
             });
 
             logger("Shrinking Database...");
-            db.Database.Rebuild();
+            repo.Database.Rebuild();
             logger("Database refresh complete");
         });
     }
 
     public void SaveSettings()
     {
-        using var db = new LiteRepository(cxstring);
-        db.Upsert(Settings);
+        repo.Upsert(Settings);
     }
 
     public void SaveTune(Tune tune)
     {
-        using var db = new LiteRepository(cxstring);
-        db.Update(tune);
+        repo.Update(tune);
     }
 
     public void SavePlaylist(Playlist playlist)
     {
-        if (playlist is null)
-        {
-            throw new ArgumentNullException(nameof(playlist));
-        }
+        ArgumentNullException.ThrowIfNull(playlist);
 
-        using var db = new LiteRepository(cxstring);
         if (playlist.Tunes.Count > 0)
         {
-            db.Upsert(playlist);
+            repo.Upsert(playlist);
         }
         else
         {
-            db.Delete<Playlist>(playlist.ID);
+            repo.Delete<Playlist>(playlist.ID);
         }
     }
 
@@ -240,8 +191,7 @@ public class JukeboxService: IDisposable
             if (playlist != null)
             {
                 Playlists.Remove(playlist);
-                using var db = new LiteRepository(cxstring);
-                db.Delete<Playlist>(playlist.ID);
+                repo.Delete<Playlist>(playlist.ID);
             }
         }
     }
@@ -252,7 +202,7 @@ public class JukeboxService: IDisposable
         // interrupt any current playing Tune
         StopPlayer();
 
-        if (Queue.Any())
+        if (Queue.Count != 0)
         {
             // get the next queue item
             var idx = shuffle ? new Random().Next(0, Queue.Count - 1) : 0;
@@ -278,7 +228,7 @@ public class JukeboxService: IDisposable
 
     public void Enqueue(Playlist playlist)
     {
-        if (playlist != null && playlist.Tunes.Any())
+        if (playlist != null && playlist.Tunes.Count != 0)
         {
             foreach (var tune in playlist.Tunes)
             {
@@ -302,7 +252,7 @@ public class JukeboxService: IDisposable
 
     public void DequeueAll()
     {
-        if (Queue.Any())
+        if (Queue.Count != 0)
         {
             Queue.Clear();
         }
@@ -443,8 +393,8 @@ public class JukeboxService: IDisposable
         }
         catch
         {
-            return null;
         }
+        return null;
     }
 
     public List<IMidiPortDetails> GetDevices()
@@ -467,4 +417,13 @@ public class JukeboxService: IDisposable
     }
 
     private static string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
+
+    [GeneratedRegex(@"[\\\'\/\>\<;:\|\*?\@\=\^\!\`\~\#\u0000\u0001\u0003\u0004]", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    private static partial Regex NotAllowed();
+
+    [GeneratedRegex(@"[\s_-]+|\.$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    private static partial Regex ConvertToSpace();
+
+    [GeneratedRegex(@"^(untitled|generated|played|written|words|\(brt\)|Copyright|http|www\.|e?mail|piano|acoustic|pedal|edition|sequenced|music\s+by|for\s+general|by\s+|words\s+|from\s+|arranged\s+|sung\s+|composed|dedicated|kmidi|melody|seq|track|this\s+and|1800S|midi\s+out|\S+\.com|\S+\.org|All Rights Reserved|with|when|just|Bdca426|dont|know|some|what|like|this|tk10|youre|Bwv001|Unnamed|comments|have|will|thing|come|v0100|midisource)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    private static partial Regex Ignore();
 }

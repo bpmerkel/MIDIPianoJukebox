@@ -1,20 +1,22 @@
-﻿@inherits Microsoft.AspNetCore.Components.LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
-<MatAppBarContainer>
-    <MatAppBar Style="z-index: 100;" Class="mat">
-        <MatAppBarRow>
-            <MatAppBarSection>
-                <MatAppBarTitle>MIDI Piano Jukebox</MatAppBarTitle>
-            </MatAppBarSection>
-            <MatAppBarSection Align="@MatAppBarSectionAlign.End">
-                <MatIconButton Link="/" Icon="@MatIconNames.Home"></MatIconButton>
-                <MatIconButton Link="playlists" Icon="@MatIconNames.Queue_music"></MatIconButton>
-                <MatIconButton Link="settings" Icon="@MatIconNames.Settings"></MatIconButton>
-                <MatIconButton Link="about" Icon="@MatIconNames.Help"></MatIconButton>
-            </MatAppBarSection>
-        </MatAppBarRow>
-    </MatAppBar>
-    <MatAppBarContent>
-        @Body
-    </MatAppBarContent>
-</MatAppBarContainer>
+<MudThemeProvider IsDarkMode="true"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar>
+        <MudAppBar Color="Color.Primary" Fixed="false" Dense="true" Elevation="4">
+            <MudText Inline="true" Typo="Typo.h4">
+                MIDI Piano Jukebox
+            </MudText>
+            <MudButton StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit" Href="/">Home</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="playlists">Playlists</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" Href="settings">Settings</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" Href="about">About</MudButton>
+        </MudAppBar>
+    </MudAppBar>
+    <MudMainContent>
+        <MudPaper>@Body</MudPaper>        
+    </MudMainContent>
+</MudLayout>
