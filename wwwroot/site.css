@@ -28,6 +28,10 @@
     text-align: right;
 }
 
+.float-right {
+    float: right;
+}
+
 .center {
     text-align: center;
 }

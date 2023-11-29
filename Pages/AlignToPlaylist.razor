@@ -16,12 +16,14 @@
                 }
             }
         }
-
-        @foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
-        {
-            isSelected.TryGetValue(p, out bool selected);
-            <MudButton Variant="@(selected ? Variant.Filled : Variant.Outlined)" OnClick="@(m => toggleSelected(p))">@p.Name</MudButton>
-        }
+        
+        <MudStack Row="true" Spacing="4">
+            @foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
+            {
+                isSelected.TryGetValue(p, out bool selected);
+                <MudButton Variant="@(selected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(m => toggleSelected(p))">@p.Name</MudButton>
+            }
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@(e => doSavePlaylist())">Save</MudButton>

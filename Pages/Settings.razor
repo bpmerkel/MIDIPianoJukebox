@@ -13,7 +13,10 @@ else
     <h3>Settings</h3>
     <div style="padding: 10px; white-space: nowrap;">
         <MudTextField @bind-Value="@JukeboxService.Settings.MIDIPath" Label="MIDI Path" Variant="Variant.Text" Disabled="@processing"></MudTextField>
-        <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh</MudButton>
+        <MudStack Row="true" Spacing="4">
+            <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing">Refresh</MudButton>
+            <MudCheckBox T="bool" Label="Update current too" Color="Color.Primary" @bind-Checked="@DoUpdatesToo" />
+        </MudStack>
         <MudSelect Dense="true" T="string" Label="MIDI Output Device" Variant="Variant.Text" Value="@JukeboxService.Settings.OutputDevice" ValueChanged="@doChangeOutputDevice">
             @foreach (var od in JukeboxService.GetDevices())
             {
@@ -27,7 +30,7 @@ else
     <div style="padding: 10px; overflow-y: scroll; height: calc(100vh - 310px)">
         @if (processing)
         {
-            <MudProgressLinear Color="Color.Primary" Striped="true" Value="@Progress" Size="Size.Small" />
+            <MudProgressLinear Color="Color.Primary" Striped="true" Value="@Progress" Size="Size.Large" />
         }
         @foreach (var log in JukeboxService.Log)
         {
@@ -39,6 +42,7 @@ else
 @code {
     double Progress = 0d;
     bool processing = false;
+    bool DoUpdatesToo = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,7 +66,7 @@ else
     {
         processing = true;
         JukeboxService.SaveSettings();
-        await JukeboxService.RefreshDatabaseAsync(msg => addLog(msg), prg => updateProgress(prg));
+        await JukeboxService.RefreshDatabaseAsync(DoUpdatesToo, msg => addLog(msg), prg => updateProgress(prg));
         processing = false;
         await base.InvokeAsync(StateHasChanged);
     }

@@ -21,9 +21,9 @@ else
     <div>
         @{
             var playlists = JukeboxService.Playlists
-            .OrderBy(playlist => playlist.Name)
-            .Select((playlist, i) => new { playlist, i })
-            .ToList();
+                .OrderBy(playlist => playlist.Name)
+                .Select((playlist, i) => new { playlist, i })
+                .ToList();
             foreach (var p in playlists)
             {
                 <a href="/playlists/@p.playlist.Name" class="navItem">@(p.playlist.Name)&nbsp;(@p.playlist.Tunes.Count.ToString("#,##0"))</a>
@@ -39,25 +39,24 @@ else
         <a href="/library/ALL" class="alphaLink">&nbsp;ALL</a>
         <a href="/library/orphan" class="navItem">&nbsp;ORPHANS</a>
     </div>
-    <MudDataGrid Items="@Tunes" T="Tune" MultiSelection="true"
-                 Hideable="true" Hover="true" Dense="true" Striped="true"
+    <MudDataGrid Items="@Tunes" T="Tune"
+                 Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
                  Groupable="true" GroupExpanded="true"
                  SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@quickFilter"
-                 Virtualize="true" FixedHeader="true" Height="500px"
-                 RowClick="@RowClicked" RowContextMenuClick="@RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
+                 Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
         <ToolBarContent>
             <MudText Typo="Typo.h6">Tunes</MudText>
+            <MudText Typo="Typo.body1">&nbsp;(@($"{Tunes?.Count:#,##0}"))</MudText>
             <MudSpacer />
-            <MudText Typo="Typo.body1"> @($"{Tunes?.Count:#,##0}")</MudText>
-            <MudTextField @bind-Value="@playlist" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            <MudTextField @bind-Value="@playlist" Placeholder="Search" Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="@doSearch"
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
-            <MudCheckBox @bind-Checked="@SearchTags" Label="Search Tags" Color="Color.Primary" />
+            <MudCheckBox T="bool" Label="Search Tags" Color="Color.Primary" CheckedChanged="@(async (isChecked) => await doSearchTags(isChecked))" />
 
             @if (playlist != null)
             {
                 var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
                 <MudButton Disabled="@exists" OnClick="@(m => createPlaylist())">Create Playlist</MudButton>
-                <MudButton Disabled="@(!exists)" OnClick="@(m => clearPlaylist())">Clear Playlist</MudButton>
+                <MudButton Disabled="@(!exists)" OnClick="@(m => clearPlaylist())">Remove Playlist</MudButton>
             }
             @if (Tunes != null)
             {
@@ -65,25 +64,25 @@ else
             }
         </ToolBarContent>
         <Columns>
-            <SelectColumn T="Tune" />
             <PropertyColumn Property="tune => tune.Name" />
-            <TemplateColumn CellClass="d-flex justify-end" Title="Rating" SortBy="@(item => item.Rating)">
+            <PropertyColumn Property="tune => tune.Duration" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
+            <TemplateColumn Title="Rating" SortBy="@(item => item.Rating)" Filterable="false" Class="justify-right" CellClass="justify-right">
                 <CellTemplate>
                     <MudStack Row>
                         <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" />
                     </MudStack>
                 </CellTemplate>
             </TemplateColumn>
-            <PropertyColumn Property="tune => tune.Plays" />
-            <PropertyColumn Property="tune => tune.Duration" Format="mm\:ss" />
-            <PropertyColumn Property="tune => tune.Tracks" />
-            <PropertyColumn Property="tune => tune.Complexity" />
+             <PropertyColumn Property="tune => tune.Plays" Class="justify-right" CellClass="justify-right" />
+             <PropertyColumn Property="tune => tune.Tracks" Class="justify-right" CellClass="justify-right" />
+             <PropertyColumn Property="tune => tune.Messages" Class="justify-right" CellClass="justify-right" />
+             <PropertyColumn Property="tune => tune.Complexity" Class="justify-right" CellClass="justify-right" />
         </Columns>
         <ChildRowContent>
             <TagList Tune="@context.Item" />
         </ChildRowContent>
         <PagerContent>
-            <MudDataGridPager T="Tune" />
+            <MudDataGridPager T="Tune" PageSizeOptions="@(new[] { 30, 50, 100, 200 })" />
         </PagerContent>
     </MudDataGrid>
 }
@@ -104,35 +103,25 @@ else
         await base.OnInitializedAsync();
     }
 
+    Task doSearchTags(bool value)
+    {
+        SearchTags = value;
+        doSearch();
+        return Task.CompletedTask;
+    }
+
     // quick filter
     bool quickFilter(Tune tune)
     {
-        if (string.IsNullOrWhiteSpace(playlist))
-            return true;
-
-        if (tune.Name.Contains(playlist, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (tune.Tags.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)))
-            return true;
+        if (playlist != null)
+        {
+            if (tune.Name?.Contains(playlist, StringComparison.OrdinalIgnoreCase) ?? false)
+                return true;
+            if (SearchTags && (tune.Tags?.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false))
+                return true;
+        }
 
         return false;
-    }
-
-    // DataGrid events
-    void RowClicked(DataGridRowClickEventArgs<Tune> args)
-    {
-        //RowClick, Index = {args.RowIndex}, Data = System.Text.Json.JsonSerializer.Serialize(args.Item)
-    }
-
-    void RowRightClicked(DataGridRowClickEventArgs<Tune> args)
-    {
-        //RowRightClick, Index = {args.RowIndex}, Data = System.Text.Json.JsonSerializer.Serialize(args.Item)
-    }
-
-    void SelectedItemsChanged(HashSet<Tune> tunes)
-    {
-        //SelectedItemsChanged, Data = System.Text.Json.JsonSerializer.Serialize(items)
     }
 
     protected void doNavTo()
@@ -180,11 +169,8 @@ else
         }
         else if (!string.IsNullOrWhiteSpace(start))
         {
-            if (Tunes == null || !Tunes.Any())
-            {
-                Tunes = JukeboxService.Tunes;
-            }
-            Tunes = Tunes
+            playlist = start;
+            Tunes = JukeboxService.Tunes
                 .Where(t => t.Name?.StartsWith(start, StringComparison.CurrentCultureIgnoreCase) ?? false)
                 .ToList();
         }
