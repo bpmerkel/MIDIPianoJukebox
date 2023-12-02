@@ -16,8 +16,8 @@ public class Tune : IEqualityComparer<Tune>
     public int Events { get; set; }
     public int Complexity { get; set; }
     [BsonIgnore] public TimeSpan Duration => TimeSpan.FromMilliseconds(Durationms);
-    public bool Equals([AllowNull] Tune x, [AllowNull] Tune y) => x?.ID == y?.ID;
-    public int GetHashCode([DisallowNull] Tune obj) => obj?.ID.GetHashCode() ?? 0;
+    public bool Equals([DisallowNull] Tune x, [DisallowNull] Tune y) => x.Filepath.Equals(y.Filepath, StringComparison.CurrentCultureIgnoreCase);
+    public int GetHashCode([DisallowNull] Tune t) => t.Filepath.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
 }
 
 public class Playlist : IEqualityComparer<Playlist>

@@ -41,7 +41,7 @@
                     <td><a href="@($"/library/{Tune.Library}")" class="tagLink">@Tune.Library</a></td>
                     <td>@Tune.Duration.ToString("m\\:ss")</td>
                     <td>@Tune.Tracks</td>
-                    <td>@Tune.Messages</td>
+                    <td>@($"{Tune.Messages:#,##0}")</td>
                     <td>@Tune.Complexity</td>
                     <td>@Tune.Plays</td>
                     @if (!OnRatingChanged.HasDelegate)

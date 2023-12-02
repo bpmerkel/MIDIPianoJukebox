@@ -33,11 +33,11 @@ public partial class JukeboxService : IDisposable
         }
     }
 
-    public Task GetJukeboxAsync()
+    public async Task GetJukeboxAsync()
     {
-        if (Loaded) return Task.CompletedTask;
+        if (Loaded) return;
 
-        return Task.Run(() =>
+        await Task.Run(() =>
         {
             if (Loaded) return;
             lock (syncroot)
@@ -67,13 +67,20 @@ public partial class JukeboxService : IDisposable
                     .Where(t => t != null)
                     .Where(t => t.Name != null)
                     .Where(t => t.Filepath != null)
-                    .Where(t => t.Durationms > 1000)
+                    .Where(t => t.Durationms > 60_000)
                     .Where(t => t.Rating != 1f) // rating of 1 means remove it
                     .OrderBy(t => t.Name)
                     .ToList();
+
+                AddLog($"Total tunes: {Tunes.Count}; Total playlists: {Playlists.Count}").AndForget();
+
+                // remove tunes from playlists that don't meet the filter rules
+                // use a Tune for equality comparison
+                Playlists.ForEach(p => p.Tunes = p.Tunes.Intersect(Tunes, new Tune()).ToList());
                 Loaded = true;
             }
         });
+        return;
     }
 
     public static async Task AddLog(string msg) => await Task.Run(() => Log.Push($"{DateTime.Now:h:mm:ss}: {msg}")).ConfigureAwait(true);
