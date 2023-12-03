@@ -31,17 +31,17 @@ public class Playlist : IEqualityComparer<Playlist>
     public int GetHashCode([DisallowNull] Playlist obj) => obj?.ID.GetHashCode() ?? 0;
 }
 
-public class Settings
-{
-    [BsonId] public ObjectId ID { get; set; } = ObjectId.NewObjectId();
-    public string MIDIPath { get; set; } = @"d:\MIDI";
-    public string OutputDevice { get; set; } = "2";
-}
-
 public class Library : IEqualityComparer<Library>
 {
     public string Name { get; set; }
     public List<Tune> Tunes { get; set; } = new List<Tune>();
     public bool Equals([AllowNull] Library x, [AllowNull] Library y) => x?.Name == y?.Name;
     public int GetHashCode([DisallowNull] Library obj) => obj?.Name.GetHashCode(StringComparison.CurrentCultureIgnoreCase) ?? 0;
+}
+
+public class Settings
+{
+    [BsonId] public ObjectId ID { get; set; } = ObjectId.NewObjectId();
+    public string MIDIPath { get; set; } = @"d:\MIDI";
+    public string OutputDevice { get; set; } = "2";
 }

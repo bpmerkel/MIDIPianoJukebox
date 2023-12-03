@@ -1,8 +1,16 @@
 ﻿@inherits LayoutComponentBase
+@inject IDialogService DialogService
 
-<MudThemeProvider IsDarkMode="true"/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
+<MudThemeProvider IsDarkMode="true" />
+<MudDialogProvider
+    FullWidth="true"
+    MaxWidth="MaxWidth.Medium"
+    CloseButton="true"
+    DisableBackdropClick="false"
+    NoHeader="false"
+    Position="DialogPosition.Center"
+    CloseOnEscapeKey="true" />
+<MudSnackbarProvider />
 
 <MudLayout>
     <MudAppBar>
@@ -13,12 +21,17 @@
             </MudHidden>
             <MudButton StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit" Href="/">Home</MudButton>
             <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="playlists">Playlists</MudButton>
-            <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" Href="settings">Settings</MudButton>
             <MudSpacer />
-            <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" Href="about">About</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
         </MudAppBar>
     </MudAppBar>
     <MudMainContent Class="ml-6 mr-6">
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code {
+    void OpenAboutDialog() => DialogService.Show<About>("About MIDI Piano Jukebox");
+    void OpenSettingsDialog() => DialogService.Show<Settings>("Settings");
+}

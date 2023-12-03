@@ -19,38 +19,24 @@
 else
 {
     <div>
-        @{
-            var playlists = JukeboxService.Playlists
-                .OrderBy(playlist => playlist.Name)
-                .Select((playlist, i) => new { playlist, i })
-                .ToList();
-            foreach (var p in playlists)
-            {
-                <a href="/playlists/@p.playlist.Name" class="navItem">@(p.playlist.Name)&nbsp;(@p.playlist.Tunes.Count.ToString("#,##0"))</a>
-                @(p.i == JukeboxService.Playlists.Count - 1 ? string.Empty : ", ")
-            }
-        }
-    </div>
-    <div class="alphaList">
-        @foreach (var c in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        @foreach (var p in JukeboxService.Playlists)
         {
-            <a href="@($"/search/{c}")" class="alphaLink">&nbsp;@c</a>
+            <a href="/playlists/@p.Name" class="navItem">@(p.Name)&nbsp;(@p.Tunes.Count.ToString("#,##0"))</a>@(", ")
         }
-        <a href="/library/ALL" class="alphaLink">&nbsp;ALL</a>
-        <a href="/library/orphan" class="navItem">&nbsp;ORPHANS</a>
+        <a href="/library/ALL" class="alphaLink">ALL</a>@(", ")
+        <a href="/library/orphan" class="navItem">ORPHANS</a>
     </div>
     <MudDataGrid Items="@Tunes" T="Tune"
-                 Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
-                 Groupable="true" GroupExpanded="true"
-                 SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@quickFilter"
-                 Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+        Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
+        Groupable="true" GroupExpanded="true"
+        SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@quickFilter"
+        Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
         <ToolBarContent>
             <MudText Typo="Typo.h6">Tunes</MudText>
             <MudText Typo="Typo.body1">&nbsp;(@($"{Tunes?.Count:#,##0}"))</MudText>
             <MudSpacer />
             <MudTextField @bind-Value="@playlist" Placeholder="Search" Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="@doSearch"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
-            <MudCheckBox T="bool" Label="Search Tags" Color="Color.Primary" CheckedChanged="@(async (isChecked) => await doSearchTags(isChecked))" />
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 
             @if (playlist != null)
             {
@@ -93,7 +79,6 @@ else
     [Parameter] public string start { get; set; }
     [Parameter] public string tag { get; set; }
     List<Tune> Tunes;
-    bool SearchTags = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,13 +88,6 @@ else
         await base.OnInitializedAsync();
     }
 
-    Task doSearchTags(bool value)
-    {
-        SearchTags = value;
-        doSearch();
-        return Task.CompletedTask;
-    }
-
     // quick filter
     bool quickFilter(Tune tune)
     {
@@ -117,7 +95,7 @@ else
         {
             if (tune.Name?.Contains(playlist, StringComparison.OrdinalIgnoreCase) ?? false)
                 return true;
-            if (SearchTags && (tune.Tags?.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false))
+            if (tune.Tags?.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
                 return true;
         }
 
@@ -188,7 +166,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(playlist)) return;
         Tunes = JukeboxService.Tunes
-            .Where(t => (SearchTags && t.Tags.Any(tag => tag.Contains(playlist, StringComparison.CurrentCultureIgnoreCase)))
+            .Where(t => t.Tags.Any(tag => tag.Contains(playlist, StringComparison.CurrentCultureIgnoreCase))
                     || (t.Name?.StartsWith(playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
             .ToList();
         StateHasChanged();
@@ -219,15 +197,6 @@ else
     {
         var parameters = new DialogParameters<AlignToPlaylist>();
         parameters.Add(x => x.Tunes, Tunes);
-
-        DialogService.Show<AlignToPlaylist>("Align", parameters, new DialogOptions
-            {
-                MaxWidth = MaxWidth.Large,
-                CloseButton = true,
-                DisableBackdropClick = true,
-                NoHeader = false,
-                Position = DialogPosition.Center,
-                CloseOnEscapeKey = true
-            });
+        DialogService.Show<AlignToPlaylist>("Align", parameters);
     }
 }
