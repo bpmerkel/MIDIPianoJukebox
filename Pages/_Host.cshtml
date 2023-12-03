@@ -1,7 +1,6 @@
 ﻿@page "/"
 @namespace MIDIPianoJukebox.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@using EmbeddedBlazorContent
 
 <!DOCTYPE html>
 <html>
@@ -15,7 +14,6 @@
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link href="site.css" rel="stylesheet" />
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-    @Html.EmbeddedBlazorContent()
 </head>
 <body class="mat">
     <app style="display: flex;">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</app>

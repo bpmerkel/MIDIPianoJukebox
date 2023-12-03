@@ -1,35 +1,31 @@
 ﻿@page "/about"
 
-<div style="padding: 10px;">
-    <h3>About MIDI Piano Jukebox</h3>
-    <p>
-        So my wife purchased a Baby Grand Player Piano, and much to my delight, it included MIDI Out and In connections.
+<MudPaper Elevation="5" Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">About MIDI Piano Jukebox</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
+        So my wife purchased a Baby Grand Player Piano, and much to my delight, it included a MIDI connection.
         Then, I inherited a PC from my father where he had accumulated over 170,000 MIDI files from varying genres.
-    </p>
-    <p>
+    </MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
         Thus commenced my challenge: to create a MIDI Jukebox app to navigate through the thousands of MIDI files,
         enable rating, and display any metadata that could help me sort and filter through them all. I found a few small apps that were file
         and folder-based, but none that gave a comprehensive Jukebox experience with customizable Playlists, a queue, and the ability to
-        rate songs as they were played (some of the MIDI songs just didn't fit my taste for the Piano).
-    </p>
-    <p>
+        rate songs as they were played (some of the MIDI songs just don't fit my taste for the Piano).
+    </MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
         And since Blazor was released, I knew the time was nigh to craft a Jukebox web application, where
-        I could run on a Windows 10 laptop under IIS, with a USB MIDI adapter into the piano. That's right--this is a dedicated web
-        server that runs on the Windows device hard-connected to the Piano.
-    </p>
-    <p>
+        I could run on a laptop with a USB MIDI adapter into the piano. That's right--this is a dedicated web
+        server that runs on the device hard-connected to the Piano.
+    </MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
         I first started with LINQPad to try out some MIDI NuGet packages to comb through the MIDI files... and then to play
-        the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter.
-    </p>
-    <p>
-        Here's where I wound up:
-        <ul>
-            <li>.NET 8</li>
-            <li>ASP.NET Core</li>
-            <li>Blazor Server</li>
-            <li>MudBlazor Material UI Components</li>
-            <li>LiteDB Document Database</li>
-            <li>No Bootstrap</li>
-        </ul>
-    </p>
-</div>
+        the MIDI files through Windows' sequencer, and then switched to the USB MIDI adapter into the piano.
+    </MudText>
+    <MudText Typo="Typo.body1">Here's where I wound up:</MudText>
+    <MudChip Color="Color.Primary">.NET 8</MudChip>
+    <MudChip Color="Color.Secondary">ASP.NET Core</MudChip>
+    <MudChip Color="Color.Info">Blazor Server</MudChip>
+    <MudChip Color="Color.Success">MudBlazor Material UI Components</MudChip>
+    <MudChip Color="Color.Warning">LiteDB Document Database</MudChip>
+    <MudChip Color="Color.Error">No Bootstrap</MudChip>
+</MudPaper>

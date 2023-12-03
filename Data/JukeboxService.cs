@@ -72,7 +72,7 @@ public partial class JukeboxService : IDisposable
                     .OrderBy(t => t.Name)
                     .ToList();
 
-                AddLog($"Total tunes: {Tunes.Count}; Total playlists: {Playlists.Count}").AndForget();
+                //AddLog($"Total tunes: {Tunes.Count}; Total playlists: {Playlists.Count}").Start();   //.AndForget();
 
                 // remove tunes from playlists that don't meet the filter rules
                 // use a Tune for equality comparison

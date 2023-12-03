@@ -2,10 +2,8 @@
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
-global using MudBlazor;
 global using System.Net.Http;
 global using MIDIPianoJukebox.Data;
-global using EmbeddedBlazorContent;
 global using Commons.Music.Midi;
 global using Commons.Music.Midi.WinMM;
 global using System;
