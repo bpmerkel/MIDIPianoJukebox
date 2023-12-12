@@ -8,12 +8,12 @@ enable rating, remote management, and display any metadata that could help me so
 and folder-based, but none that gave a comprehensive Jukebox experience with customizable Playlists, a queue, and the ability to
 rate songs as they were played (some of the MIDI songs just didn't fit my taste for the Piano).
 
-And since .NET Core 3 and Blazor were just released, I knew the time was nigh to craft a Jukebox web site myself, where
-I could run on an old Windows 10 laptop with IIS, and use a USB MIDI adapter into the piano. This is a dedicated web
+And since .NET 8 released with more Blazor features, I knew the time was nigh to craft a Jukebox solution myself, where
+I could run on an old laptop, and use a (now wireless via Bluetooth) USB MIDI adapter into the piano. The laptop serves as a dedicated web
 server that runs on the Windows device hard-connected to the Piano.
 
 I first evaluated MIDI NuGet packages with LINQPad--to read through the MIDI files and iventory them into a LiteDB document database.
-Then ultimately to Play the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter to the Piano.
+Then play the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter to the piano.
 
 Here are the major technologies for the solution:
 * .NET 8
