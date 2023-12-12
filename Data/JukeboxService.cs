@@ -12,7 +12,7 @@ public partial class JukeboxService : IDisposable
     public Settings Settings { get; set; } = new();
     public List<Playlist> Playlists { get; private set; }
     public List<Tune> Tunes { get; set; }
-    public List<Tune> Queue { get; } = new();
+    public List<Tune> Queue { get; } = [];
     public static ConcurrentStack<string> Log { get; } = new();
     public Tune Tune { get; set; }
     public int TotalTime { get; set; }
@@ -53,11 +53,6 @@ public partial class JukeboxService : IDisposable
                 playlists.EnsureIndex(x => x.ID, true);
                 playlists.EnsureIndex(x => x.Name, true);
 
-                if (playlists.Count() == 0)
-                {
-                    playlists.Insert(new Playlist { Name = "Favorites", ID = ObjectId.NewObjectId() });
-                }
-
                 Settings = settings.FindOne(q => true) ?? new();
                 Playlists = playlists.Include(p => p.Tunes).FindAll()
                     .Where(p => p != null)
@@ -69,10 +64,13 @@ public partial class JukeboxService : IDisposable
                     .Where(t => t.Filepath != null)
                     .Where(t => t.Durationms > 60_000)
                     .Where(t => t.Rating != 1f) // rating of 1 means remove it
+                    .Select(t =>
+                    {
+                        t.Name = t.Name.Replace('_', ' ');
+                        return t;
+                    })
                     .OrderBy(t => t.Name)
                     .ToList();
-
-                //AddLog($"Total tunes: {Tunes.Count}; Total playlists: {Playlists.Count}").Start();   //.AndForget();
 
                 // remove tunes from playlists that don't meet the filter rules
                 // use a Tune for equality comparison
@@ -80,7 +78,6 @@ public partial class JukeboxService : IDisposable
                 Loaded = true;
             }
         });
-        return;
     }
 
     public static async Task AddLog(string msg) => await Task.Run(() => Log.Push($"{DateTime.Now:h:mm:ss}: {msg}")).ConfigureAwait(true);
@@ -121,7 +118,7 @@ public partial class JukeboxService : IDisposable
                         var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
                         var msleft = (total - counter) / rate; // = ms
                         var eta = DateTime.Now.AddMilliseconds(msleft);
-                        logger($"{(total - counter):#,##0} {inserted:#,##0} {updated:#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {file.FullName})");
+                        logger($"{(total - counter):#,##0} {inserted:#,##0} {updated:#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {file.FullName}");
                         progress(100 * counter / total);
                     }
 
@@ -138,24 +135,18 @@ public partial class JukeboxService : IDisposable
                         .FirstOrDefault();
                     if (!doUpdates && tune != null) return;
 
-                    var library = subpath.Contains('\\') ? subpath[..subpath.IndexOf('\\')] : subpath;
                     var name = Path.GetFileNameWithoutExtension(file.Name);
                     var tracksCount = music.Tracks.Count;
                     var messages = music.Tracks.SelectMany(track => track.Messages).ToList();
                     var messagesCount = messages.Count;
                     var events = messages.Select(msg => msg.Event).ToList();
                     var eventsCount = events.Count;
-                    var complexity = tracksCount * eventsCount / messagesCount;
-
-                    var tags = new List<string> { library };
-                    tags.AddRange(events
+                    var tags = events
                         .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text || e.Msb == MidiMetaType.InstrumentName))
                         .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
                         .Select(m => re1.Replace(m, string.Empty))
                         .Select(m => re2.Replace(m, " ").Trim())
                         .Where(m => !reIgnore.IsMatch(m))
-                    );
-                    var tagsForEntity = tags
                         .Where(m => !string.IsNullOrWhiteSpace(m))
                         .Where(m => m.Length > 3)
                         .Select(m => ToTitleCase(m))
@@ -167,14 +158,12 @@ public partial class JukeboxService : IDisposable
                     if (tune != null)
                     {
                         tune.Name = name;
-                        tune.Library = library;
                         tune.Filepath = subpath;
                         tune.Tracks = tracksCount;
                         tune.Messages = messagesCount;
                         tune.Events = eventsCount;
-                        tune.Complexity = complexity;
                         tune.Durationms = duration;
-                        tune.Tags = tagsForEntity;
+                        tune.Tags = tags;
                         // tune.Rating // leave alone
                         // tune.AddedUtc // leave alone
                         repo.Update(tune);
@@ -185,14 +174,12 @@ public partial class JukeboxService : IDisposable
                         repo.Insert(new Tune
                         {
                             Name = name,
-                            Library = library,
                             Filepath = subpath,
                             Tracks = tracksCount,
                             Messages = messagesCount,
                             Events = eventsCount,
-                            Complexity = complexity,
                             Durationms = duration,
-                            Tags = tagsForEntity,
+                            Tags = tags,
                             Rating = 0f,
                             AddedUtc = DateTime.UtcNow
                         });
@@ -212,15 +199,9 @@ public partial class JukeboxService : IDisposable
         });
     }
 
-    public void SaveSettings()
-    {
-        repo.Upsert(Settings);
-    }
+    public void SaveSettings() => repo.Upsert(Settings);
 
-    public void SaveTune(Tune tune)
-    {
-        repo.Update(tune);
-    }
+    public void SaveTune(Tune tune) => repo.Update(tune);
 
     public void SavePlaylist(Playlist playlist)
     {
@@ -298,10 +279,7 @@ public partial class JukeboxService : IDisposable
         }
     }
 
-    public void EnqueueAll(List<Tune> tunes)
-    {
-        Queue.AddRange(tunes);
-    }
+    public void EnqueueAll(List<Tune> tunes) => Queue.AddRange(tunes);
 
     public void DequeueAll()
     {

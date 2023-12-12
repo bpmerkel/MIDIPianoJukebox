@@ -1,0 +1,25 @@
+﻿@inject NavigationManager NavigationManager
+@inject JukeboxService JukeboxService
+@using MIDIPianoJukebox.Data
+
+<MudChipSet bind-SelectedChip="selectedPlaylist" Filter="true" Mandatory="true">
+    @{
+        var playlists = JukeboxService.Playlists
+            .Where(pp => pp.Tunes.Count > 0)
+            .OrderBy(pp => pp.Name)
+            .ToList();
+        foreach (var p in playlists)
+        {
+            <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/" + p.Name)">
+                @p.Name (@p.Tunes.Count.ToString("#,##0"))
+            </MudChip>
+        }
+    }
+    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL (@JukeboxService.Tunes.Count)</MudChip>
+    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/orphan")">ORPHANS</MudChip>
+</MudChipSet>
+
+@code {
+    [Parameter] public string UrlBase { get; set; } = string.Empty;
+    protected MudChip selectedPlaylist;
+}

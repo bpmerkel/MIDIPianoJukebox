@@ -1,16 +1,10 @@
 ﻿@using MIDIPianoJukebox.Data
 
-<div class="tagList">
-    @{
-        var last = Tune.Tags.Count - 1;
-        var comma = ", ";
-        foreach (var item in Tune.Tags.Select((tag,i) => new { tag, delim = i < last ? comma : string.Empty }))
-        {
-            <a href="@($"/tag/{item.tag}")" class="tagLink">@item.tag</a>@(item.delim)
-        }
-    }
-</div>
+@foreach (var tag in Tune.Tags)
+{
+    <MudChip Text="purple" Color="Color.Success" Size="Size.Small" Href="@("/tag/" + tag)">@tag</MudChip>
+}
+
 @code {
-    [Parameter]
-    public Tune Tune { get; set; }
+    [Parameter] public Tune Tune { get; set; }
 }

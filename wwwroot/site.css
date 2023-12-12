@@ -1,13 +1,7 @@
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid red;
-}
-
-.validation-message {
-    color: red;
+.loading {
+    text-align: center;
+    align-content: center;
+    vertical-align: middle;
 }
 
 .top {
@@ -34,10 +28,6 @@
 
 .center {
     text-align: center;
-}
-
-.no-padding {
-    padding: 0 !important;
 }
 
 .navItem {
