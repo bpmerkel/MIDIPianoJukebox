@@ -5,55 +5,59 @@ namespace MIDIPianoJukebox.Pages;
 
 public partial class Playlists
 {
-    [Parameter] public string playlist { get; set; }
-    [Parameter] public string tag { get; set; }
+    [Inject] NavigationManager NavigationManager { get; set; }
+    [Inject] JukeboxService JukeboxService { get; set; }
+    [Inject] IDialogService DialogService { get; set; }
+
+    [Parameter] public string Playlist { get; set; }
+    [Parameter] public string Tag { get; set; }
     List<Tune> Tunes;
 
     protected override async Task OnInitializedAsync()
     {
-        NavigationManager.LocationChanged += (s, e) => doNavTo();
+        NavigationManager.LocationChanged += (s, e) => DoNavTo();
         await JukeboxService.GetJukeboxAsync();
-        doNavTo();
+        DoNavTo();
         await base.OnInitializedAsync();
     }
 
     // quick filter
-    bool quickFilter(Tune tune)
+    bool QuickFilter(Tune tune)
     {
-        if (playlist != null)
+        if (Playlist != null)
         {
-            if (tune.Name?.Contains(playlist, StringComparison.OrdinalIgnoreCase) ?? false)
+            if (tune.Name?.Contains(Playlist, StringComparison.OrdinalIgnoreCase) ?? false)
                 return true;
-            if (tune.Tags?.Any(tag => playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
+            if (tune.Tags?.Any(tag => Playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
                 return true;
         }
         return false;
     }
 
-    protected void doNavTo()
+    protected void DoNavTo()
     {
         if (!JukeboxService.Loaded) return;
 
-        if (!string.IsNullOrWhiteSpace(tag))
+        if (!string.IsNullOrWhiteSpace(Tag))
         {
-            playlist = tag;
+            Playlist = Tag;
             Tunes = JukeboxService.Tunes
                 .Where(t => t.Tags.Any(tag => tag.Equals(tag, StringComparison.CurrentCultureIgnoreCase))
-                        || (t.Name?.StartsWith(tag, StringComparison.CurrentCultureIgnoreCase) ?? false))
+                        || (t.Name?.StartsWith(Tag, StringComparison.CurrentCultureIgnoreCase) ?? false))
                 .ToList();
         }
-        else if (!string.IsNullOrWhiteSpace(playlist))
+        else if (!string.IsNullOrWhiteSpace(Playlist))
         {
-            var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase));
+            var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
             if (p != null)
             {
                 Tunes = p.Tunes;
             }
-            else if (playlist.Equals("all", StringComparison.CurrentCultureIgnoreCase))
+            else if (Playlist.Equals("all", StringComparison.CurrentCultureIgnoreCase))
             {
                 Tunes = JukeboxService.Tunes;
             }
-            else if (playlist.Equals("orphan", StringComparison.CurrentCultureIgnoreCase))
+            else if (Playlist.Equals("orphan", StringComparison.CurrentCultureIgnoreCase))
             {
                 var comparer = new Tune();
                 var pltunes = JukeboxService.Playlists.SelectMany(p => p.Tunes).Distinct(comparer);
@@ -63,48 +67,50 @@ public partial class Playlists
         else
         {
             // default to ALL
-            playlist = "All";
+            Playlist = "All";
             Tunes = JukeboxService.Tunes;
         }
 
         StateHasChanged();
     }
 
-    protected void doSearch()
+    protected void DoSearch()
     {
-        if (string.IsNullOrWhiteSpace(playlist)) return;
+        if (string.IsNullOrWhiteSpace(Playlist)) return;
         Tunes = JukeboxService.Tunes
-            .Where(t => t.Tags.Any(tag => tag.Contains(playlist, StringComparison.CurrentCultureIgnoreCase))
-                || (t.Name?.StartsWith(playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
+            .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+                || (t.Name?.StartsWith(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
             .ToList();
         StateHasChanged();
     }
 
-    protected void createPlaylist()
+    protected void CreatePlaylist()
     {
         // if a new playlist is requested, add it
-        if (!string.IsNullOrWhiteSpace(playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(playlist, StringComparison.CurrentCultureIgnoreCase)))
+        if (!string.IsNullOrWhiteSpace(Playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase)))
         {
-            var p = new Data.Playlist { Name = toTitleCase(playlist), ID = ObjectId.NewObjectId(), Tunes = Tunes };
+            var p = new Data.Playlist { Name = ToTitleCase(Playlist), ID = ObjectId.NewObjectId(), Tunes = Tunes };
             JukeboxService.Playlists.Add(p);
             JukeboxService.SavePlaylist(p);
             StateHasChanged();
         }
     }
 
-    protected void clearPlaylist()
+    protected void ClearPlaylist()
     {
-        JukeboxService.ClearPlaylist(playlist);
-        playlist = null;
+        JukeboxService.ClearPlaylist(Playlist);
+        Playlist = null;
         StateHasChanged();
     }
 
-    protected string toTitleCase(string input) => System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input);
+    protected string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input);
 
-    protected void openDialog()
+    protected void OpenDialog()
     {
-        var parameters = new DialogParameters<AlignToPlaylist>();
-        parameters.Add(x => x.Tunes, Tunes);
+        var parameters = new DialogParameters<AlignToPlaylist>
+        {
+            { x => x.Tunes, Tunes }
+        };
         DialogService.Show<AlignToPlaylist>("Align", parameters);
     }
 }

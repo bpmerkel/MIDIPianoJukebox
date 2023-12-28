@@ -3,5 +3,7 @@
 // Project-level suppressions either have no target or are given
 // a specific target and scoped to a namespace, type, member, etc.
 
+
 [assembly: SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>", Scope = "member", Target = "~P:MIDIPianoJukebox.Data.Tune.Tags")]
 [assembly: SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>", Scope = "member", Target = "~P:MIDIPianoJukebox.Data.Playlist.Tunes")]
+[assembly: SuppressMessage("Style", "IDE0305:Simplify collection initialization", Justification = "<Pending>", Scope = "member", Target = "~M:MIDIPianoJukebox.Pages.AlignToPlaylist.DoSavePlaylist")]

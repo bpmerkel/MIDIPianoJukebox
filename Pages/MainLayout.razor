@@ -1,5 +1,4 @@
 ﻿@inherits LayoutComponentBase
-@inject IDialogService DialogService
 
 <MudThemeProvider IsDarkMode="true" />
 <MudDialogProvider
@@ -30,8 +29,3 @@
         @Body
     </MudMainContent>
 </MudLayout>
-
-@code {
-    void OpenAboutDialog() => DialogService.Show<About>("About MIDI Piano Jukebox");
-    void OpenSettingsDialog() => DialogService.Show<Settings>("Settings");
-}

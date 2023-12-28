@@ -1,6 +1,4 @@
-﻿@inject JukeboxService JukeboxService
-
-@if (!JukeboxService.Loaded)
+﻿@if (!JukeboxService.Loaded)
 {
     <div style="text-align: center; align-content: center; vertical-align: middle">
         <em>Loading...</em><br />
@@ -11,12 +9,12 @@ else
 {
     <MudCard Outlined="true">
         <MudCardContent>
-            <MudTextField @bind-Value="@JukeboxService.Settings.MIDIPath" Label="MIDI Path" Variant="Variant.Text" Disabled="@processing"></MudTextField>
+            <MudTextField @bind-Value="MIDIPath" Label="MIDI Path" Variant="Variant.Text" Disabled="@Processing"></MudTextField>
             <MudStack Row="true" Spacing="4">
-                <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => doDatabaseRefresh())" Disabled="@processing" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">Refresh</MudButton>
-                <MudCheckBox T="bool" Label="Update current too" Color="Color.Primary" @bind-Checked="@DoUpdatesToo" />
+                <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => DoDatabaseRefresh())" Disabled="@Processing" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">Refresh</MudButton>
+                <MudCheckBox T="bool" Label="Update current too" Color="Color.Primary" @bind-Checked="DoUpdatesToo" />
             </MudStack>
-            <MudSelect Dense="true" T="string" Label="MIDI Output Device" Variant="Variant.Text" Value="@JukeboxService.Settings.OutputDevice" ValueChanged="@doChangeOutputDevice">
+            <MudSelect Dense="true" T="string" Label="MIDI Output Device" Variant="Variant.Text" Value="@JukeboxService.Settings.OutputDevice" ValueChanged="@DoChangeOutputDevice">
                 @foreach (var od in JukeboxService.GetDevices())
                 {
                     <MudSelectItem Value="@od.Id">@od.Name</MudSelectItem>
@@ -25,7 +23,7 @@ else
             </MudSelect>
 
             <div style="height: calc(100vh - 330px)">
-                @if (processing)
+                @if (Processing)
                 {
                     <MudProgressLinear Color="Color.Primary" Striped="true" Value="@Progress" Size="Size.Large" />
                 }
@@ -36,50 +34,4 @@ else
             </div>
         </MudCardContent>
     </MudCard>
-}
-
-@code {
-    double Progress = 0d;
-    bool processing = false;
-    bool DoUpdatesToo = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await JukeboxService.GetJukeboxAsync();
-        await base.OnInitializedAsync();
-    }
-
-    async void addLog(string msg)
-    {
-        await JukeboxService.AddLog(msg);
-        await base.InvokeAsync(StateHasChanged);
-    }
-
-    async void updateProgress(double prg)
-    {
-        Progress = prg;
-        await base.InvokeAsync(StateHasChanged);
-    }
-
-    async Task doDatabaseRefresh()
-    {
-        processing = true;
-        JukeboxService.SaveSettings();
-        await JukeboxService.RefreshDatabaseAsync(DoUpdatesToo, msg => addLog(msg), prg => updateProgress(prg));
-        processing = false;
-        await base.InvokeAsync(StateHasChanged);
-    }
-
-    void doChangeOutputDevice(string sel)
-    {
-        if (sel == "refresh")
-        {
-            StateHasChanged();
-        }
-        else
-        {
-            JukeboxService.Settings.OutputDevice = sel;
-            JukeboxService.SaveSettings();
-        }
-    }
 }
