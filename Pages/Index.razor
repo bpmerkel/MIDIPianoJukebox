@@ -1,8 +1,5 @@
 @page "/"
 @page "/{Playlist}"
-@inject NavigationManager NavigationManager
-@inject JukeboxService JukeboxService
-@using MIDIPianoJukebox.Data
 
 @if (!JukeboxService.Loaded)
 {
@@ -14,7 +11,7 @@
 else
 {
     <MudPaper Elevation="4" Class="mb-5">
-        <Picker UrlBase="" />
+        <Picker UrlBase="" Playlists="@JukeboxService.Playlists" />
         <MudText Typo="Typo.h6">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
         <MudButton StartIcon="@Icons.Material.Filled.Shuffle" OnClick="@(m => Shuffle = !Shuffle)" Color="Color.Primary" Variant="@(Shuffle ? Variant.Filled : Variant.Text)">Shuffle</MudButton>
         <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="DoPlayNext" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
@@ -53,29 +50,24 @@ else
     if (JukeboxService.Queue.Any())
     {
         <MudDataGrid @ref="dg" Items="@JukeboxService.Queue" T="Tune" MultiSelection="true"
-                     Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
-                     SortMode="SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
-                     Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+            Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
+            SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
+            Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
             <Columns>
-                <PropertyColumn Property="tune => tune.Name" />
-                <PropertyColumn Property="tune => tune.Duration" Format="m\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
-                <TemplateColumn Title="Rating" SortBy="@(item => item.Rating)" Filterable="true" Class="justify-right" CellClass="justify-right">
+                <PropertyColumn Property="@(tune => tune.Name)" />
+                <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" Class="justify-right" CellClass="justify-right" />
+                <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
                     <CellTemplate>
                         <MudStack Row>
                             <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
                         </MudStack>
                     </CellTemplate>
-                    <FilterTemplate>
-                        <MudStack Row>
-                            <MudRating Size="@Size.Small" />
-                        </MudStack>
-                    </FilterTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="tune => tune.Tracks" Class="justify-right" CellClass="justify-right" Filterable="false" />
-                <PropertyColumn Property="tune => tune.Messages" Class="justify-right" CellClass="justify-right" Format="#,##0" Filterable="false" />
+                </PropertyColumn>
+                <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" Filterable="false" />
+                <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" Filterable="false" />
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Tune" PageSizeOptions="@(new[] { 30, 50, 100, 200 })" />
+                <MudDataGridPager T="Tune" PageSizeOptions="@([ 30, 50, 100, 200 ])" />
             </PagerContent>
         </MudDataGrid>
     }

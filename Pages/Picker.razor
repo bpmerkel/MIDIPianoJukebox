@@ -1,6 +1,6 @@
 ﻿<MudChipSet bind-SelectedChip="selectedPlaylist" Filter="true" Mandatory="true">
     @{
-        var playlists = JukeboxService.Playlists
+        var playlists = Playlists
             .Where(pp => pp.Tunes.Count > 0)
             .OrderBy(pp => pp.Name)
             .ToList();
@@ -11,6 +11,6 @@
             </MudChip>
         }
     }
-    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL (@JukeboxService.Tunes.Count)</MudChip>
+    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL</MudChip>
     <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/orphan")">ORPHANS</MudChip>
 </MudChipSet>

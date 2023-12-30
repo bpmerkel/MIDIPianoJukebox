@@ -8,10 +8,9 @@ public partial class Playlists
     [Inject] NavigationManager NavigationManager { get; set; }
     [Inject] JukeboxService JukeboxService { get; set; }
     [Inject] IDialogService DialogService { get; set; }
-
     [Parameter] public string Playlist { get; set; }
     [Parameter] public string Tag { get; set; }
-    List<Tune> Tunes;
+    private List<Tune> Tunes;
 
     protected override async Task OnInitializedAsync()
     {
@@ -22,7 +21,7 @@ public partial class Playlists
     }
 
     // quick filter
-    bool QuickFilter(Tune tune)
+    protected bool QuickFilter(Tune tune)
     {
         if (Playlist != null)
         {
@@ -89,9 +88,12 @@ public partial class Playlists
         // if a new playlist is requested, add it
         if (!string.IsNullOrWhiteSpace(Playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase)))
         {
-            var p = new Data.Playlist { Name = ToTitleCase(Playlist), ID = ObjectId.NewObjectId(), Tunes = Tunes };
-            JukeboxService.Playlists.Add(p);
-            JukeboxService.SavePlaylist(p);
+            JukeboxService.SavePlaylist(new Playlist
+            {
+                Name = ToTitleCase(Playlist),
+                ID = ObjectId.NewObjectId(),
+                Tunes = Tunes
+            });
             StateHasChanged();
         }
     }

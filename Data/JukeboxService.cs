@@ -4,7 +4,7 @@ namespace MIDIPianoJukebox.Data;
 
 public partial class JukeboxService : IDisposable
 {
-    const string cxstring = "Filename=jukebox.db";
+    private const string cxstring = "jukebox.db";
     private LiteRepository repo = new (cxstring);
     private readonly object syncroot = new();
 
@@ -75,6 +75,7 @@ public partial class JukeboxService : IDisposable
                 // remove tunes from playlists that don't meet the filter rules
                 // use a Tune for equality comparison
                 Playlists.ForEach(p => p.Tunes = p.Tunes.Intersect(Tunes, new Tune()).ToList());
+                Console.WriteLine($"Loaded {Tunes.Count} tunes, {Playlists.Count} playlists");
                 Loaded = true;
             }
         });
@@ -210,6 +211,7 @@ public partial class JukeboxService : IDisposable
         if (playlist.Tunes.Count > 0)
         {
             repo.Upsert(playlist);
+            Playlists.Add(playlist);
         }
         else
         {

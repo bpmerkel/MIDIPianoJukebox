@@ -11,7 +11,7 @@
 }
 else
 {
-    <Picker UrlBase="/playlists" />
+    <Picker UrlBase="/playlists" Playlists="@JukeboxService.Playlists" />
     <MudDataGrid Items="@Tunes" T="Tune"
         Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
         Groupable="true" GroupExpanded="true"
@@ -19,7 +19,7 @@ else
         Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
         <ToolBarContent>
             <MudText Typo="Typo.h6">@($"{Tunes?.Count:#,##0}") Tunes</MudText>
-            <MudTextField @bind-Value="Playlist" Placeholder="Search"
+            <MudTextField @bind-Value="@Playlist" Placeholder="Search"
                 Variant="Variant.Outlined" Margin="Margin.Dense"
                 Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
@@ -35,23 +35,23 @@ else
             }
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="tune => tune.Name" />
-            <PropertyColumn Property="tune => tune.Duration" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
-            <TemplateColumn Title="Rating" SortBy="@(item => item.Rating)" Filterable="false" Class="justify-right" CellClass="justify-right">
+            <PropertyColumn Property="@(tune => tune.Name)" />
+            <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
+            <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
                 <CellTemplate>
                     <MudStack Row>
-                        <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" />
+                        <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
                     </MudStack>
                 </CellTemplate>
-            </TemplateColumn>
-             <PropertyColumn Property="tune => tune.Tracks" Class="justify-right" CellClass="justify-right" />
-             <PropertyColumn Property="tune => tune.Messages" Class="justify-right" CellClass="justify-right" Format="#,##0" />
+            </PropertyColumn>
+            <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" />
+            <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" />
         </Columns>
         <ChildRowContent>
             <TagList Tune="@context.Item" />
         </ChildRowContent>
         <PagerContent>
-            <MudDataGridPager T="Tune" PageSizeOptions="@(new[] { 30, 50, 100, 200 })" />
+            <MudDataGridPager T="Tune" PageSizeOptions="@([ 30, 50, 100, 200 ])" />
         </PagerContent>
     </MudDataGrid>
 }

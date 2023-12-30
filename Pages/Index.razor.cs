@@ -6,6 +6,8 @@ namespace MIDIPianoJukebox.Pages;
 
 public partial class Index
 {
+    [Inject] NavigationManager NavigationManager { get; set; }
+    [Inject] JukeboxService JukeboxService { get; set; }
     [Parameter] public string Playlist { get; set; }
     bool Shuffle = false;
     MudDataGrid<Tune> dg;

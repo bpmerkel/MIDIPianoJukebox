@@ -4,3 +4,4 @@ obj/
 *.user
 *.pubxml
 *.db
+/.config
