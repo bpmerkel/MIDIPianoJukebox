@@ -4,7 +4,7 @@ namespace MIDIPianoJukebox.Data;
 
 public partial class JukeboxService : IDisposable
 {
-    private const string cxstring = "jukebox.db";
+    private const string cxstring = @"Filename=jukebox.db; Connection=Shared";
     private LiteRepository repo = new (cxstring);
     private readonly object syncroot = new();
 
@@ -64,6 +64,7 @@ public partial class JukeboxService : IDisposable
                     .Where(t => t.Filepath != null)
                     .Where(t => t.Durationms > 60_000)
                     .Where(t => t.Rating != 1f) // rating of 1 means remove it
+                    .Where(t => File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
                     .Select(t =>
                     {
                         t.Name = t.Name.Replace('_', ' ');
@@ -455,10 +456,10 @@ public partial class JukeboxService : IDisposable
 
     private static string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
 
-    [GeneratedRegex(@"[\\\'\/\>\<;:\|\*?\@\=\^\!\`\~\#\u0000\u0001\u0003\u0004]", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    [GeneratedRegex(@"^[^a-zA-Z]+", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex NotAllowed();
 
-    [GeneratedRegex(@"[\s_-]+|\.$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    [GeneratedRegex(@"[\s_-]+|\.+$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex ConvertToSpace();
 
     [GeneratedRegex(@"^(untitled|generated|played|written|words|\(brt\)|Copyright|http|www\.|e?mail|piano|acoustic|pedal|edition|sequenced|music\s+by|for\s+general|by\s+|words\s+|from\s+|arranged\s+|sung\s+|composed|dedicated|kmidi|melody|seq|track|this\s+and|1800S|midi\s+out|\S+\.com|\S+\.org|All Rights Reserved|with|when|just|Bdca426|dont|know|some|what|like|this|tk10|youre|Bwv001|Unnamed|comments|have|will|thing|come|v0100|midisource)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]

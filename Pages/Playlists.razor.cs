@@ -107,12 +107,14 @@ public partial class Playlists
 
     protected string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input);
 
-    protected void OpenDialog()
+    protected async void OpenDialog()
     {
         var parameters = new DialogParameters<AlignToPlaylist>
         {
             { x => x.Tunes, Tunes }
         };
-        DialogService.Show<AlignToPlaylist>("Align", parameters);
+        var dialog = DialogService.Show<AlignToPlaylist>("Align", parameters);
+        var result = await dialog.Result;
+        await InvokeAsync(StateHasChanged);
     }
 }

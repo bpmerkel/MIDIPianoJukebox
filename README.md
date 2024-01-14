@@ -21,4 +21,5 @@ Here are the major technologies for the solution:
 * Blazor (server-side)
 * MudBlazor Material UI Components
 * LiteDB Document Database
+* Managed MIDI for MIDI-file reading, parsing, playing
     
