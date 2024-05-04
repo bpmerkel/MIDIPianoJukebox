@@ -10,10 +10,10 @@ rate songs as they were played (some of the MIDI songs just didn't fit my taste 
 
 And since .NET 8 released with more Blazor features, I knew the time was nigh to craft a Jukebox solution myself, where
 I could run on an old laptop, and use a (now wireless via Bluetooth) USB MIDI adapter into the piano. The laptop serves as a dedicated web
-server that runs on the Windows device hard-connected to the Piano.
+server that runs on the Windows device connected to the Piano.
 
 I first evaluated MIDI NuGet packages with LINQPad--to read through the MIDI files and iventory them into a LiteDB document database.
-Then play the MIDI files through Windows' sequencer, and switchable to the USB MIDI adapter to the piano.
+Then play the MIDI files through Windows' sequencer, and switchable to the Bluetooth MIDI adapter to the piano.
 
 Here are the major technologies for the solution:
 * .NET 8
