@@ -4,8 +4,8 @@ namespace MIDIPianoJukebox.Data;
 
 public partial class JukeboxService : IDisposable
 {
-    private const string cxstring = @"Filename=jukebox.db; Connection=Shared";
-    private LiteRepository repo = new (cxstring);
+    private const string cxstring = @"Filename=jukebox.db";
+    private readonly LiteRepository repo = new (cxstring);
     private readonly object syncroot = new();
 
     public bool Loaded { get; set; } = false;
@@ -64,7 +64,8 @@ public partial class JukeboxService : IDisposable
                     .Where(t => t.Filepath != null)
                     .Where(t => t.Durationms > 60_000)
                     .Where(t => t.Rating != 1f) // rating of 1 means remove it
-                    .Where(t => File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
+                    .AsParallel()
+                    //.Where(t => File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
                     .Select(t =>
                     {
                         t.Name = t.Name.Replace('_', ' ');

@@ -1,16 +1,23 @@
-namespace MIDIPianoJukebox;
+using MudBlazor.Services;
 
-public static class Program
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddScoped<HttpClient>();
+builder.Services.AddSingleton<JukeboxService>();
+builder.Services.AddMudServices();
+builder.Services.Configure<IISServerOptions>(options =>
 {
-    public static void Main(string[] args)
-    {
-        CreateHostBuilder(args).Build().Run();
-    }
+    options.AutomaticAuthentication = false;
+});
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-        .ConfigureWebHostDefaults(webBuilder =>
-        {
-            webBuilder.UseStartup<Startup>();
-        });
-}
+
+var app = builder.Build();
+app.UseDeveloperExceptionPage();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseStaticFiles();
+app.UseRouting();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
+app.Run();
