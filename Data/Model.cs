@@ -18,27 +18,17 @@ public class Tune : IEqualityComparer<Tune>
     public int GetHashCode([DisallowNull] Tune t) => t.Filepath.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
 }
 
-public class Playlist : IEqualityComparer<Playlist>
+public class Playlist
 {
     [BsonId] public ObjectId ID { get; set; }
     public string Name { get; set; }
     [BsonRef(nameof(Tune))]
     public List<Tune> Tunes { get; set; } = [];
-    public bool Equals([AllowNull] Playlist x, [AllowNull] Playlist y) => x?.ID == y?.ID;
-    public int GetHashCode([DisallowNull] Playlist obj) => obj?.ID.GetHashCode() ?? 0;
-}
-
-public class Library : IEqualityComparer<Library>
-{
-    public string Name { get; set; }
-    public List<Tune> Tunes { get; set; } = [];
-    public bool Equals([AllowNull] Library x, [AllowNull] Library y) => x?.Name == y?.Name;
-    public int GetHashCode([DisallowNull] Library obj) => obj?.Name.GetHashCode(StringComparison.CurrentCultureIgnoreCase) ?? 0;
 }
 
 public class Settings
 {
     [BsonId] public ObjectId ID { get; set; } = ObjectId.NewObjectId();
-    public string MIDIPath { get; set; } = @"d:\MIDI";
+    public string MIDIPath { get; set; } = @"C:\Users\brady\Downloads\MIDI";
     public string OutputDevice { get; set; } = "2";
 }

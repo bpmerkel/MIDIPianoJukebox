@@ -3,15 +3,44 @@ using MudBlazor;
 
 namespace MIDIPianoJukebox.Pages;
 
+/// <summary>
+/// Represents the Playlists page.
+/// </summary>
 public partial class Playlists
 {
+    /// <summary>
+    /// Gets or sets the NavigationManager.
+    /// </summary>
     [Inject] NavigationManager NavigationManager { get; set; }
+
+    /// <summary>
+    /// Gets or sets the JukeboxService.
+    /// </summary>
     [Inject] JukeboxService JukeboxService { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DialogService.
+    /// </summary>
     [Inject] IDialogService DialogService { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Playlist.
+    /// </summary>
     [Parameter] public string Playlist { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Tag.
+    /// </summary>
     [Parameter] public string Tag { get; set; }
+
+    /// <summary>
+    /// Represents the list of Tunes.
+    /// </summary>
     private List<Tune> Tunes;
 
+    /// <summary>
+    /// Called when the component is initialized.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         NavigationManager.LocationChanged += (s, e) => DoNavTo();
@@ -20,7 +49,11 @@ public partial class Playlists
         await base.OnInitializedAsync();
     }
 
-    // quick filter
+    /// <summary>
+    /// Filters the tunes based on the Playlist.
+    /// </summary>
+    /// <param name="tune">The tune to filter.</param>
+    /// <returns>True if the tune matches the filter, false otherwise.</returns>
     protected bool QuickFilter(Tune tune)
     {
         if (Playlist != null)
@@ -33,6 +66,9 @@ public partial class Playlists
         return false;
     }
 
+    /// <summary>
+    /// Navigates to the specified Playlist or Tag.
+    /// </summary>
     protected void DoNavTo()
     {
         if (!JukeboxService.Loaded) return;
@@ -73,6 +109,9 @@ public partial class Playlists
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Searches for tunes based on the Playlist.
+    /// </summary>
     protected void DoSearch()
     {
         if (string.IsNullOrWhiteSpace(Playlist)) return;
@@ -83,6 +122,9 @@ public partial class Playlists
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Creates a new Playlist.
+    /// </summary>
     protected void CreatePlaylist()
     {
         // if a new playlist is requested, add it
@@ -98,6 +140,9 @@ public partial class Playlists
         }
     }
 
+    /// <summary>
+    /// Clears the current Playlist.
+    /// </summary>
     protected void ClearPlaylist()
     {
         JukeboxService.ClearPlaylist(Playlist);
@@ -105,8 +150,16 @@ public partial class Playlists
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Converts the input string to title case.
+    /// </summary>
+    /// <param name="input">The string to convert.</param>
+    /// <returns>The converted string.</returns>
     protected string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input);
 
+    /// <summary>
+    /// Opens a dialog to align the Playlist.
+    /// </summary>
     protected async void OpenDialog()
     {
         var parameters = new DialogParameters<AlignToPlaylist>

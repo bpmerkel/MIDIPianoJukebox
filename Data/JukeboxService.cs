@@ -2,37 +2,102 @@ using System.Collections.Concurrent;
 
 namespace MIDIPianoJukebox.Data;
 
+/// <summary>
+/// The JukeboxService class is responsible for managing the jukebox's state and behavior.
+/// It provides methods for loading the jukebox, adding logs, refreshing the database, saving settings, tunes, and playlists,
+/// managing the play queue, controlling the player, and getting device information.
+/// </summary>
 public partial class JukeboxService : IDisposable
 {
-    private const string cxstring = @"Filename=jukebox.db";
-    private readonly LiteRepository repo = new (cxstring);
+    /// <summary>
+    /// Connection string for the database.
+    /// </summary>
+    private const string cxstring = @"Filename=jukebox.db;Upgrade=true";
+
+    /// <summary>
+    /// Repository for accessing the database.
+    /// </summary>
+    private readonly LiteRepository repo = new(cxstring);
+
+    /// <summary>
+    /// Object for thread synchronization.
+    /// </summary>
     private readonly object syncroot = new();
 
-    public bool Loaded { get; set; } = false;
-    public Settings Settings { get; set; } = new();
+    /// <summary>
+    /// Gets a value indicating whether the jukebox is loaded.
+    /// </summary>
+    public bool Loaded { get; private set; } = false;
+    /// <summary>
+    /// Gets the settings of the jukebox.
+    /// </summary>
+    public Settings Settings { get; private set; } = new();
+    /// <summary>
+    /// Gets the playlists of the jukebox.
+    /// </summary>
     public List<Playlist> Playlists { get; private set; }
+    /// <summary>
+    /// Gets or sets the tunes of the jukebox.
+    /// </summary>
     public List<Tune> Tunes { get; set; }
+    /// <summary>
+    /// Gets the queue of the jukebox.
+    /// </summary>
     public List<Tune> Queue { get; } = [];
+    /// <summary>
+    /// Gets the log of the jukebox.
+    /// </summary>
     public static ConcurrentStack<string> Log { get; } = new();
-    public Tune Tune { get; set; }
-    public int TotalTime { get; set; }
-    public TimeSpan CurrentTime { get; set; }
-    public TimeSpan RemainingTime { get; set; }
-    public MidiPlayer CurrentPlayer { get; set; }
+    /// <summary>
+    /// Gets the current tune of the jukebox.
+    /// </summary>
+    public Tune Tune { get; private set; }
+    /// <summary>
+    /// Gets the total time of the current tune.
+    /// </summary>
+    public int TotalTime { get; private set; }
+    /// <summary>
+    /// Gets the current time of the current tune.
+    /// </summary>
+    public TimeSpan CurrentTime { get; private set; }
+    /// <summary>
+    /// Gets the remaining time of the current tune.
+    /// </summary>
+    public TimeSpan RemainingTime { get; private set; }
+    /// <summary>
+    /// Gets the current player of the jukebox.
+    /// </summary>
+    public MidiPlayer CurrentPlayer { get; private set; }
+    /// <summary>
+    /// Gets the state of the current player.
+    /// </summary>
     public PlayerState State => CurrentPlayer?.State ?? PlayerState.Stopped;
+    /// <summary>
+    /// Gets or sets the action to be performed when the progress changes.
+    /// </summary>
     public Action<double> ProgressChanged { get; set; }
 
+    /// <summary>
+    /// Progress of the current operation.
+    /// </summary>
     private double _progress = 0d;
+
+    /// <summary>
+    /// Gets or sets the progress of the current tune.
+    /// </summary>
     public double Progress
     {
         get => _progress;
-        set
+        private set
         {
             _progress = value;
             ProgressChanged(value);
         }
     }
 
+    /// <summary>
+    /// Asynchronously loads the jukebox data from the database.
+    /// </summary>
     public async Task GetJukeboxAsync()
     {
         if (Loaded) return;
@@ -83,8 +148,18 @@ public partial class JukeboxService : IDisposable
         });
     }
 
+    /// <summary>
+    /// Asynchronously adds a log message to the jukebox log.
+    /// </summary>
+    /// <param name="msg">The message to add to the log.</param>
     public static async Task AddLog(string msg) => await Task.Run(() => Log.Push($"{DateTime.Now:h:mm:ss}: {msg}")).ConfigureAwait(true);
 
+    /// <summary>
+    /// Asynchronously refreshes the jukebox database.
+    /// </summary>
+    /// <param name="doUpdates">Whether to perform updates.</param>
+    /// <param name="logger">The logger action.</param>
+    /// <param name="progress">The progress action.</param>
     public Task RefreshDatabaseAsync(bool doUpdates, Action<string> logger, Action<double> progress)
     {
         return Task.Run(() =>
@@ -202,10 +277,21 @@ public partial class JukeboxService : IDisposable
         });
     }
 
+    /// <summary>
+    /// Saves the jukebox settings to the database.
+    /// </summary>
     public void SaveSettings() => repo.Upsert(Settings);
 
+    /// <summary>
+    /// Saves a tune to the database.
+    /// </summary>
+    /// <param name="tune">The tune to save.</param>
     public void SaveTune(Tune tune) => repo.Update(tune);
 
+    /// <summary>
+    /// Saves a playlist to the database.
+    /// </summary>
+    /// <param name="playlist">The playlist to save.</param>
     public void SavePlaylist(Playlist playlist)
     {
         ArgumentNullException.ThrowIfNull(playlist);
@@ -221,6 +307,10 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Clears a playlist from the jukebox.
+    /// </summary>
+    /// <param name="playlistName">The name of the playlist to clear.</param>
     public void ClearPlaylist(string playlistName)
     {
         if (!string.IsNullOrWhiteSpace(playlistName))
@@ -234,7 +324,10 @@ public partial class JukeboxService : IDisposable
         }
     }
 
-    // get the next Tune from the queue and play it
+    /// <summary>
+    /// Get the next Tune from the queue and play it.
+    /// </summary>
+    /// <param name="shuffle">Whether to shuffle the queue.</param>
     public void PlayNext(bool shuffle)
     {
         // interrupt any current playing Tune
@@ -256,6 +349,10 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Enqueues a tune to the jukebox queue.
+    /// </summary>
+    /// <param name="tune">The tune to enqueue.</param>
     public void Enqueue(Tune tune)
     {
         if (tune != null && !Queue.Contains(tune))
@@ -264,6 +361,10 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Enqueues a playlist to the jukebox queue.
+    /// </summary>
+    /// <param name="playlist">The playlist to enqueue.</param>
     public void Enqueue(Playlist playlist)
     {
         if (playlist != null && playlist.Tunes.Count != 0)
@@ -275,6 +376,10 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Dequeues a tune from the jukebox queue.
+    /// </summary>
+    /// <param name="tune">The tune to dequeue.</param>
     public void Dequeue(Tune tune)
     {
         if (tune != null && Queue.Contains(tune))
@@ -283,8 +388,15 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Enqueues a list of tunes to the jukebox queue.
+    /// </summary>
+    /// <param name="tunes">The list of tunes to enqueue.</param>
     public void EnqueueAll(List<Tune> tunes) => Queue.AddRange(tunes);
 
+    /// <summary>
+    /// Dequeues all tunes from the jukebox queue.
+    /// </summary>
     public void DequeueAll()
     {
         if (Queue.Count != 0)
@@ -293,11 +405,29 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// The MIDI output device.
+    /// </summary>
     private IMidiOutput outputDevice;
-    public event EventHandler ReadyToPlayNext;
-    readonly SynchronizationContext main = SynchronizationContext.Current;
-    bool isStopping;
 
+    /// <summary>
+    /// Event that is triggered when the jukebox is ready to play the next tune.
+    /// </summary>
+    public event EventHandler ReadyToPlayNext;
+
+    /// <summary>
+    /// The main synchronization context.
+    /// </summary>
+    private readonly SynchronizationContext main = SynchronizationContext.Current;
+
+    /// <summary>
+    /// Flag indicating if the service is stopping.
+    /// </summary>
+    private bool isStopping;
+
+    /// <summary>
+    /// Plays the current tune in the jukebox.
+    /// </summary>
     private void PlayPlayer()
     {
         // spin wait until stopped, if pending a stop
@@ -325,6 +455,9 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Handles the event when the player finishes playing a tune.
+    /// </summary>
     private void Player_Finished()
     {
         // will need this to signal next tune in the queue
@@ -336,12 +469,19 @@ public partial class JukeboxService : IDisposable
         Signal_next();
     }
 
+    /// <summary>
+    /// Signals the jukebox to play the next tune in the queue.
+    /// </summary>
     private void Signal_next()
     {
         // will need this to signal next tune in the queue
         main.Post(state => ReadyToPlayNext?.Invoke(this, new EventArgs()), null);
     }
 
+    /// <summary>
+    /// Handles the event when the player receives a MIDI event.
+    /// </summary>
+    /// <param name="m">The MIDI event received.</param>
     private void Player_EventReceived(MidiEvent m)
     {
         if (CurrentPlayer == null) return;
@@ -359,6 +499,9 @@ public partial class JukeboxService : IDisposable
         if (prior != newp) Progress = 100 * progress;  // which also signals a UI update
     }
 
+    /// <summary>
+    /// Stops the current tune in the jukebox.
+    /// </summary>
     public void StopPlayer()
     {
         if (CurrentPlayer == null) return;
@@ -386,6 +529,9 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Pauses the current tune in the jukebox.
+    /// </summary>
     public void PausePlayer()
     {
         if (CurrentPlayer == null) return;
@@ -399,6 +545,9 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Resumes the current tune in the jukebox.
+    /// </summary>
     public void ResumePlayer()
     {
         if (CurrentPlayer == null) return;
@@ -408,13 +557,20 @@ public partial class JukeboxService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Skips a certain number of ticks in the current tune.
+    /// </summary>
+    /// <param name="ticks">The number of ticks to skip.</param>
     public void SkipPlayer(int ticks)
     {
         if (CurrentPlayer == null) return;
         SkipPlayerTo(CurrentPlayer.PlayDeltaTime + ticks);
     }
 
-    // perform an absolute skip
+    /// <summary>
+    /// Skips to a certain tick in the current tune.
+    /// </summary>
+    /// <param name="ticks">The tick to skip to.</param>
     public void SkipPlayerTo(int ticks)
     {
         if (CurrentPlayer == null || ticks < 0) return;
@@ -422,7 +578,17 @@ public partial class JukeboxService : IDisposable
         ResumePlayer();
     }
 
+    /// <summary>
+    /// Gets the music for the current tune.
+    /// </summary>
+    /// <returns>The music for the current tune.</returns>
     private MidiMusic GetMusic() => GetMusic(Path.Combine(Settings.MIDIPath, Tune.Filepath));
+    
+    /// <summary>
+    /// Gets the music from a MIDI file.
+    /// </summary>
+    /// <param name="path">The path to the MIDI file.</param>
+    /// <returns>The music from the MIDI file.</returns>
     private MidiMusic GetMusic(string path)
     {
         try
@@ -436,12 +602,20 @@ public partial class JukeboxService : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Gets a list of MIDI devices.
+    /// </summary>
+    /// <returns>A list of MIDI devices.</returns>
     public List<IMidiPortDetails> GetDevices()
     {
         var wmm = new WinMMMidiAccess();
         return wmm.Outputs.ToList();
     }
 
+    /// <summary>
+    /// Gets a MIDI output device.
+    /// </summary>
+    /// <returns>A MIDI output device.</returns>
     public IMidiOutput GetDevice()
     {
         var wmm = new WinMMMidiAccess();
@@ -449,20 +623,41 @@ public partial class JukeboxService : IDisposable
         return dev;
     }
 
+    /// <summary>
+    /// Disposes of the jukebox service.
+    /// </summary>
     public void Dispose()
     {
         if (CurrentPlayer != null) StopPlayer();
+        repo.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Converts a string to title case.
+    /// </summary>
+    /// <param name="input">The string to convert.</param>
+    /// <returns>The string in title case.</returns>
     private static string ToTitleCase(string input) => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
 
+    /// <summary>
+    /// Gets a regex for matching non-alphabetic characters at the start of a string.
+    /// </summary>
+    /// <returns>The regex for matching non-alphabetic characters at the start of a string.</returns>
     [GeneratedRegex(@"^[^a-zA-Z]+", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex NotAllowed();
 
+    /// <summary>
+    /// Gets a regex for matching one or more spaces, underscores, or hyphens, or one or more periods at the end of a string.
+    /// </summary>
+    /// <returns>The regex for matching one or more spaces, underscores, or hyphens, or one or more periods at the end of a string.</returns>
     [GeneratedRegex(@"[\s_-]+|\.+$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex ConvertToSpace();
 
+    /// <summary>
+    /// Gets a regex for matching certain words and phrases that should be ignored.
+    /// </summary>
+    /// <returns>The regex for matching certain words and phrases that should be ignored.</returns>
     [GeneratedRegex(@"^(untitled|generated|played|written|words|\(brt\)|Copyright|http|www\.|e?mail|piano|acoustic|pedal|edition|sequenced|music\s+by|for\s+general|by\s+|words\s+|from\s+|arranged\s+|sung\s+|composed|dedicated|kmidi|melody|seq|track|this\s+and|1800S|midi\s+out|\S+\.com|\S+\.org|All Rights Reserved|with|when|just|Bdca426|dont|know|some|what|like|this|tk10|youre|Bwv001|Unnamed|comments|have|will|thing|come|v0100|midisource)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex Ignore();
 }
