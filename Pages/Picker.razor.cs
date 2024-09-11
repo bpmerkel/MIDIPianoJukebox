@@ -21,5 +21,5 @@ public partial class Picker
     /// <summary>
     /// Represents the selected Playlist.
     /// </summary>
-    protected MudChip selectedPlaylist;
+    protected MudChip<string> selectedPlaylist;
 }

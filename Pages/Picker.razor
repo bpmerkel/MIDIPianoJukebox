@@ -1,4 +1,4 @@
-﻿<MudChipSet bind-SelectedChip="selectedPlaylist" Filter="true" Mandatory="true">
+﻿<MudChipSet T="string" bind-SelectedChip="selectedPlaylist" Filter="true" Mandatory="true">
     @{
         var playlists = Playlists
             .Where(pp => pp.Tunes.Count > 0)
@@ -11,6 +11,6 @@
             </MudChip>
         }
     }
-    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL</MudChip>
-    <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/orphan")">ORPHANS</MudChip>
+    <MudChip T="string" Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL</MudChip>
+    <MudChip T="string" Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/orphan")">ORPHANS</MudChip>
 </MudChipSet>
