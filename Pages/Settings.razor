@@ -12,7 +12,7 @@ else
             <MudTextField @bind-Value="MIDIPath" Label="MIDI Path" Variant="Variant.Text" Disabled="@Processing"></MudTextField>
             <MudStack Row="true" Spacing="4">
                 <MudButton StartIcon="@Icons.Material.Filled.Refresh" OnClick="@(_ => DoDatabaseRefresh())" Disabled="@Processing" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">Refresh</MudButton>
-                <MudCheckBox T="bool" Label="Update current too" Color="Color.Primary" @bind-Checked="DoUpdatesToo" />
+                <MudCheckBox T="bool" Label="Update current too" Color="Color.Primary" @bind-Value="DoUpdatesToo" />
             </MudStack>
             <MudSelect Dense="true" T="string" Label="MIDI Output Device" Variant="Variant.Text" Value="@JukeboxService.Settings.OutputDevice" ValueChanged="@DoChangeOutputDevice">
                 @foreach (var od in JukeboxService.GetDevices())

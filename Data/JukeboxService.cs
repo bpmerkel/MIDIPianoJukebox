@@ -28,50 +28,62 @@ public partial class JukeboxService : IDisposable
     /// Gets a value indicating whether the jukebox is loaded.
     /// </summary>
     public bool Loaded { get; private set; } = false;
+
     /// <summary>
     /// Gets the settings of the jukebox.
     /// </summary>
     public Settings Settings { get; private set; } = new();
+
     /// <summary>
     /// Gets the playlists of the jukebox.
     /// </summary>
     public List<Playlist> Playlists { get; private set; }
+
     /// <summary>
     /// Gets or sets the tunes of the jukebox.
     /// </summary>
     public List<Tune> Tunes { get; set; }
+
     /// <summary>
     /// Gets the queue of the jukebox.
     /// </summary>
     public List<Tune> Queue { get; } = [];
+
     /// <summary>
     /// Gets the log of the jukebox.
     /// </summary>
     public static ConcurrentStack<string> Log { get; } = new();
+
     /// <summary>
     /// Gets the current tune of the jukebox.
     /// </summary>
     public Tune Tune { get; private set; }
+
     /// <summary>
     /// Gets the total time of the current tune.
     /// </summary>
     public int TotalTime { get; private set; }
+
     /// <summary>
     /// Gets the current time of the current tune.
     /// </summary>
     public TimeSpan CurrentTime { get; private set; }
+
     /// <summary>
     /// Gets the remaining time of the current tune.
     /// </summary>
     public TimeSpan RemainingTime { get; private set; }
+
     /// <summary>
     /// Gets the current player of the jukebox.
     /// </summary>
     public MidiPlayer CurrentPlayer { get; private set; }
+
     /// <summary>
     /// Gets the state of the current player.
     /// </summary>
     public PlayerState State => CurrentPlayer?.State ?? PlayerState.Stopped;
+
     /// <summary>
     /// Gets or sets the action to be performed when the progress changes.
     /// </summary>

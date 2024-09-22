@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace MIDIPianoJukebox.Pages;
 
@@ -21,5 +20,5 @@ public partial class Picker
     /// <summary>
     /// Represents the selected Playlist.
     /// </summary>
-    protected MudChip<string> selectedPlaylist;
+    protected string selectedPlaylist;
 }

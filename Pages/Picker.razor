@@ -1,4 +1,4 @@
-﻿<MudChipSet T="string" bind-SelectedChip="selectedPlaylist" Filter="true" Mandatory="true">
+﻿<MudChipSet T="string" @bind-SelectedValue="selectedPlaylist" SelectionMode="SelectionMode.SingleSelection">
     @{
         var playlists = Playlists
             .Where(pp => pp.Tunes.Count > 0)
