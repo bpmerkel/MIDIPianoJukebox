@@ -35,12 +35,6 @@ app.UseStaticFiles();
 // Use routing middleware
 app.UseRouting();
 
-// Use static files middleware
-app.UseStaticFiles();
-
-// Use routing middleware
-app.UseRouting();
-
 // Map Blazor SignalR hub
 app.MapBlazorHub();
 
