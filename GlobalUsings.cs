@@ -1,11 +1,5 @@
-﻿// This file is used by Code Analysis to maintain SuppressMessage
-// attributes that are applied to this project.
-// Project-level suppressions either have no target or are given
-// a specific target and scoped to a namespace, type, member, etc.
-global using Microsoft.AspNetCore.Builder;
-global using Microsoft.AspNetCore.Hosting;
+﻿global using Microsoft.AspNetCore.Builder;
 global using Microsoft.Extensions.DependencyInjection;
-global using Microsoft.Extensions.Hosting;
 global using System;
 global using System.IO;
 global using System.Linq;
