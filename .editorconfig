@@ -26,3 +26,6 @@ dotnet_diagnostic.CA1307.severity = none
 
 # CA1031: Do not catch general exception types
 dotnet_diagnostic.CA1031.severity = silent
+
+# IDE0305: Simplify collection initialization
+dotnet_style_prefer_collection_expression = never
