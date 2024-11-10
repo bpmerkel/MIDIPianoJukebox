@@ -1,4 +1,4 @@
-﻿<MudChipSet T="string" @bind-SelectedValue="selectedPlaylist" SelectionMode="SelectionMode.SingleSelection">
+﻿<MudChipSet T="Playlist" @bind-SelectedValue="selectedPlaylist" CheckMark="true" SelectionMode="SelectionMode.SingleSelection">
     @{
         var playlists = Playlists
             .Where(pp => pp.Tunes.Count > 0)
@@ -6,11 +6,9 @@
             .ToList();
         foreach (var p in playlists)
         {
-            <MudChip Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/" + p.Name)">
+            <MudChip T="Playlist" Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/" + p.Name)" Value="p">
                 @p.Name (@p.Tunes.Count.ToString("#,##0"))
             </MudChip>
         }
     }
-    <MudChip T="string" Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/ALL")">ALL</MudChip>
-    <MudChip T="string" Text="purple" Color="Color.Secondary" Size="Size.Small" Href="@(UrlBase + "/orphan")">ORPHANS</MudChip>
 </MudChipSet>

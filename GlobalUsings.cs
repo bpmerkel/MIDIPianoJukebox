@@ -3,9 +3,9 @@
 // Project-level suppressions either have no target or are given
 // a specific target and scoped to a namespace, type, member, etc.
 global using Microsoft.AspNetCore.Builder;
-global using Microsoft.AspNetCore.Hosting;
+global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.AspNetCore.Components;
 global using Microsoft.Extensions.DependencyInjection;
-global using Microsoft.Extensions.Hosting;
 global using System;
 global using System.IO;
 global using System.Linq;
@@ -18,7 +18,9 @@ global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;
 global using System.Collections.Generic;
 global using System.ComponentModel;
+global using MudBlazor;
+global using MudBlazor.Services;
+global using LiteDB;
+global using MIDIPianoJukebox.Data;
 global using Commons.Music.Midi;
 global using Commons.Music.Midi.WinMM;
-global using MIDIPianoJukebox.Data;
-global using LiteDB;

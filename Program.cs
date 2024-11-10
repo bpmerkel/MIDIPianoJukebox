@@ -1,5 +1,3 @@
-using MudBlazor.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add Razor Pages services to the DI container

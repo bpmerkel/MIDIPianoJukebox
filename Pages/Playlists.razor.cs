@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using MudBlazor;
-
-namespace MIDIPianoJukebox.Pages;
+﻿namespace MIDIPianoJukebox.Pages;
 
 /// <summary>
 /// Represents the Playlists page.

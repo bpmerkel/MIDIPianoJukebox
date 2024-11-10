@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using MudBlazor;
-
-namespace MIDIPianoJukebox.Pages;
+﻿namespace MIDIPianoJukebox.Pages;
 
 /// <summary>
 /// Represents the Index page.

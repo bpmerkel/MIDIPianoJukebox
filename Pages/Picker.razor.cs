@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components;
-
 namespace MIDIPianoJukebox.Pages;
 
 /// <summary>
@@ -20,5 +18,5 @@ public partial class Picker
     /// <summary>
     /// Represents the selected Playlist.
     /// </summary>
-    protected string selectedPlaylist;
+    protected Playlist selectedPlaylist;
 }
