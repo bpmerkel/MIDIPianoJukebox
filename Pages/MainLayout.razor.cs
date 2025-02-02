@@ -13,10 +13,10 @@ public partial class MainLayout
     /// <summary>
     /// Opens the About dialog.
     /// </summary>
-    void OpenAboutDialog() => DialogService.Show<About>("About MIDI Piano Jukebox");
+    void OpenAboutDialog() => DialogService.ShowAsync<About>("About MIDI Piano Jukebox");
 
     /// <summary>
     /// Opens the Settings dialog.
     /// </summary>
-    void OpenSettingsDialog() => DialogService.Show<Settings>("Settings");
+    void OpenSettingsDialog() => DialogService.ShowAsync<Settings>("Settings");
 }

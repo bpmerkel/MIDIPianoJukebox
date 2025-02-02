@@ -13,7 +13,7 @@ public partial class AlignToPlaylist
     /// <summary>
     /// Gets or sets the MudDialogInstance.
     /// </summary>
-    [CascadingParameter] protected MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] protected IMudDialogInstance MudDialog { get; set; }
 
     /// <summary>
     /// Gets or sets the list of Tunes.

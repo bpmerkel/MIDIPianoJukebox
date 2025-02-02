@@ -163,8 +163,8 @@ public partial class Playlists
         {
             { x => x.Tunes, Tunes }
         };
-        var dialog = DialogService.Show<AlignToPlaylist>("Align", parameters);
-        var result = await dialog.Result;
+        var dialog = DialogService.ShowAsync<AlignToPlaylist>("Align", parameters);
+        var result = await dialog;
         await InvokeAsync(StateHasChanged);
     }
 }
