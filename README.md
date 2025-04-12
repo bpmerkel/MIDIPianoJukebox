@@ -6,7 +6,7 @@ Further, I inherited a PC from my father where he had accumulated over 170,000 M
 Thus commenced my challenge: to create a MIDI Jukebox application to navigate through the thousands of MIDI files,
 enable rating, remote management, and display any metadata that could help me sort and filter through them all.
 I found a few small apps that were file and folder-based, but none that gave a comprehensive Jukebox experience
-with customizable Playlists, a queue, and the ability to rate songs as they were played (some of the MIDI songs just didn't fit my taste for the Piano).
+with customizable Playlists, a queue, and the ability to rate songs as they were played (some of the MIDI songs just don't fit my taste on the piano).
 
 And since .NET released with the server-side Blazor capabilities, I knew the time was nigh to craft a Jukebox solution, where
 I could run on an old laptop, and use a (now wireless via Bluetooth) USB MIDI adapter into the piano. The laptop serves as a dedicated web
@@ -43,4 +43,4 @@ The site is easy to setup. Follow these steps:
 You can remotely operate the Jukebox from most browsers from your phone, iPad, etc... I found the Blazor server-side application works well with Safari, Chrome, and Edge.
 The app will track your song ratings, allow skipping forward, shufffle, play/pause, etc.
 
-I've created playlists for "Ragtime", "Christmas", "Beatles", and plenty of other genres and keywords--even MIDI files recroded by certain artists that sounds great on the piano.
+I've created playlists for "Ragtime", "Christmas", "Beatles", and plenty of other genres and keywords--even MIDI files recorded by certain artists that sounds great on the piano.
