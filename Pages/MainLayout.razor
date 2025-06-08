@@ -15,12 +15,9 @@
     <MudAppBar>
         <MudAppBar Color="Color.Primary" Fixed="false" Dense="true" Elevation="4">
             <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
-                <MudText Inline="true" Typo="Typo.h6">MIDI Piano Jukebox</MudText>
+                <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="/">MIDI Piano Jukebox</MudButton>
                 <MudSpacer />
             </MudHidden>
-            <MudButton StartIcon="@Icons.Material.Filled.Home" Color="Color.Inherit" Href="/">Home</MudButton>
-            <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="playlists">Playlists</MudButton>
-            <MudSpacer />
             <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
             <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
         </MudAppBar>

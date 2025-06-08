@@ -1,57 +1,45 @@
-@page "/playlists"
-@page "/playlists/{Playlist}"
-@page "/tag/{Tag}"
-
-@if (!JukeboxService.Loaded)
-{
-    <div class="loading">
-        <em>Loading...</em><br />
-        <img src="/giphy.gif" alt="Loading..." />
-    </div>
-}
-else
-{
-    <Picker UrlBase="/playlists" Playlists="@JukeboxService.Playlists" />
-    <MudDataGrid Items="@Tunes" T="Tune"
-        Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
-        Groupable="true" GroupExpanded="true"
-        SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
-        Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">@($"{Tunes?.Count:#,##0}") Tunes</MudText>
-            <MudTextField @bind-Value="@Playlist" Placeholder="Search"
-                Variant="Variant.Outlined" Margin="Margin.Dense"
-                Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
-                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
-            @if (Playlist != null)
-            {
-                var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
-                <MudButton Disabled="@exists" OnClick="@(m => CreatePlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Create Playlist</MudButton>
-                <MudButton Disabled="@(!exists)" OnClick="@(m => ClearPlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Remove Playlist</MudButton>
-            }
-            @if (Tunes != null)
-            {
-                <MudButton StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(e => OpenDialog())" Disabled="@(!Tunes.Any())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Align</MudButton>
-            }
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="@(tune => tune.Name)" />
-            <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
-            <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
-                <CellTemplate>
-                    <MudStack Row>
-                        <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
-                    </MudStack>
-                </CellTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" />
-            <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" />
-        </Columns>
-        <ChildRowContent>
-            <TagList Tune="@context.Item" />
-        </ChildRowContent>
-        <PagerContent>
-            <MudDataGridPager T="Tune" PageSizeOptions="@([ 30, 50, 100, 200 ])" />
-        </PagerContent>
-    </MudDataGrid>
-}
+<MudDataGrid Items="@Tunes" T="Tune"
+    Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
+    Groupable="true" GroupExpanded="true"
+    SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
+    Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">@($"{Tunes?.Count:#,##0}") Tunes</MudText>
+        <MudTextField @bind-Value="@Playlist" Placeholder="Search"
+                      Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
+        @if (Playlist != null)
+        {
+            var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
+            <MudButton Disabled="@exists" OnClick="@(m => CreatePlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Create Playlist</MudButton>
+            <MudButton Disabled="@(!exists)" OnClick="@(m => ClearPlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Remove Playlist</MudButton>
+        }
+        @if (Tunes != null)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(e => OpenDialog())" Disabled="@(!Tunes.Any())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Align</MudButton>
+        }
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="@(tune => tune.Name)" />
+        <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
+        <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
+            <CellTemplate>
+                <MudStack Row>
+                    <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
+                </MudStack>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" />
+        <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" />
+    </Columns>
+    <ChildRowContent>
+        @foreach (var tag in @context.Item.Tags)
+        {
+            <MudChip T="string" Variant="Variant.Text" OnClick="@(() => SelectTag(tag))" Color="Color.Primary" Size="Size.Small">@tag</MudChip>
+        }
+    </ChildRowContent>
+    <PagerContent>
+        <MudDataGridPager T="Tune" PageSizeOptions="@([30, 50, 100, 200])" />
+    </PagerContent>
+</MudDataGrid>

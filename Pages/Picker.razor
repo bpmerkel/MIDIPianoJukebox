@@ -1,14 +1,10 @@
-﻿<MudChipSet T="Playlist" CheckMark="true" SelectionMode="SelectionMode.SingleSelection">
-    @{
-        var playlists = Playlists
-            .Where(pp => pp.Tunes.Count > 0)
-            .OrderBy(pp => pp.Name)
-            .ToList();
-        foreach (var p in playlists)
+﻿<MudStack>
+    <MudText Typo="Typo.h6">Playlists</MudText>
+    <MudList T="Playlist" Dense="true" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="NavTo">
+        @foreach (var p in Playlists)
         {
-            <MudChip T="Playlist" Text="purple" Color="Color.Secondary" Size="Size.Small" OnClick="@(() => NavTo(p))" Value="p">
-                @p.Name (@p.Tunes.Count.ToString("#,##0"))
-            </MudChip>
+            <MudListItem Text="@($"{p.Name} ({p.Tunes.Count:#,##0})")" OnClick="@(() => NavTo(p))" Value="p" Style="white-space: nowrap" />
         }
-    }
-</MudChipSet>
+    </MudList>
+    <MudButton StartIcon="@Icons.Material.Filled.AddCircle" ButtonType="ButtonType.Button" OnClick="@AddNew">Add playlist</MudButton>
+</MudStack>

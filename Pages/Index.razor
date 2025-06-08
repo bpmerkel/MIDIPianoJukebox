@@ -10,65 +10,70 @@
 }
 else
 {
-    <MudPaper Elevation="4" Class="mb-5">
-        <Picker UrlBase="" Playlists="@JukeboxService.Playlists" />
-        <MudText Typo="Typo.h6">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
-        <MudButton StartIcon="@Icons.Material.Filled.Shuffle" OnClick="@(m => Shuffle = !Shuffle)" Color="Color.Primary" Variant="@(Shuffle ? Variant.Filled : Variant.Text)">Shuffle</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="DoPlayNext" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.PauseCircleFilled" OnClick="DoPause" Disabled="@(JukeboxService.State != PlayerState.Playing)">Pause</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.PlayCircleOutline" OnClick="DoPlay" Disabled="@(JukeboxService.State != PlayerState.Paused)">Resume</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.Replay" OnClick="DoReplay" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Replay</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.FastForward" OnClick="DoSkip" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Skip 10</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.Stop" OnClick="DoStop" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Stop</MudButton>
-        @if (JukeboxService.Tune != null)
-        {
-            <div>
-                <div>
-                    <MudProgressLinear Color="Color.Primary" Value="@JukeboxService.Progress" Size="Size.Large" Striped="true">
-                        @JukeboxService.RemainingTime.ToString("m\\:ss")
-                        @if (JukeboxService.State == PlayerState.Stopped)
-                        {
-                            <span>&nbsp;Stopped</span>
-                        }
-                        else if (JukeboxService.State == PlayerState.Playing)
-                        {
-                            <span>&nbsp;Playing</span>
-                        }
-                        else if (JukeboxService.State == PlayerState.Paused)
-                        {
-                            <span>&nbsp;Paused</span>
-                        }
-                    </MudProgressLinear>
-                </div>
-                <div class="justify-right">
-                    @JukeboxService.Tune.Duration.ToString("m\\:ss")
-                </div>
-            </div>
-            <TuneCard Tune="@JukeboxService.Tune" OnRatingChanged="@(r => DoRatingChanged(JukeboxService.Tune, r, true))" />
-        }
-    </MudPaper>
-    if (JukeboxService.Queue.Any())
-    {
-        <MudDataGrid @ref="dg" Items="@JukeboxService.Queue" T="Tune" MultiSelection="true"
-            Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
-            SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
-            Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
-            <Columns>
-                <PropertyColumn Property="@(tune => tune.Name)" />
-                <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" Class="justify-right" CellClass="justify-right" />
-                <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
-                    <CellTemplate>
-                        <MudStack Row>
-                            <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
-                        </MudStack>
-                    </CellTemplate>
-                </PropertyColumn>
-                <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" Filterable="false" />
-                <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" Filterable="false" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Tune" PageSizeOptions="@([ 30, 50, 100, 200 ])" />
-            </PagerContent>
-        </MudDataGrid>
-    }
+    <MudStack Row="true" Breakpoint="Breakpoint.None" Wrap="Wrap.NoWrap">
+        <Picker />
+        <MudStack>
+            <MudPaper Elevation="4" Class="mb-5">
+                <MudText Typo="Typo.h6">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
+                <MudButton StartIcon="@Icons.Material.Filled.Shuffle" OnClick="@(m => Shuffle = !Shuffle)" Color="Color.Primary" Variant="@(Shuffle? Variant.Filled: Variant.Text)">Shuffle</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="DoPlayNext" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.PauseCircleFilled" OnClick="DoPause" Disabled="@(JukeboxService.State != PlayerState.Playing)">Pause</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.PlayCircleOutline" OnClick="DoPlay" Disabled="@(JukeboxService.State != PlayerState.Paused)">Resume</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Replay" OnClick="DoReplay" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Replay</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.FastForward" OnClick="DoSkip" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Skip 10</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Stop" OnClick="DoStop" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Stop</MudButton>
+                @if (JukeboxService.Tune != null)
+                {
+                    <div>
+                        <div>
+                            <MudProgressLinear Color="Color.Primary" Value="@JukeboxService.Progress" Size="Size.Large" Striped="true">
+                                @JukeboxService.RemainingTime.ToString("m\\:ss")
+                                @if (JukeboxService.State == PlayerState.Stopped)
+                                {
+                                    <span>&nbsp;Stopped</span>
+                                }
+                                else if (JukeboxService.State == PlayerState.Playing)
+                                {
+                                    <span>&nbsp;Playing</span>
+                                }
+                                else if (JukeboxService.State == PlayerState.Paused)
+                                {
+                                    <span>&nbsp;Paused</span>
+                                }
+                            </MudProgressLinear>
+                        </div>
+                        <div class="justify-right">
+                            @JukeboxService.Tune.Duration.ToString("m\\:ss")
+                        </div>
+                    </div>
+                    <TuneCard Tune="@JukeboxService.Tune" OnRatingChanged="@(r => DoRatingChanged(JukeboxService.Tune, r, true))" />
+                }
+            </MudPaper>
+            @if (JukeboxService.Queue.Any())
+            {
+                <MudDataGrid @ref="dg" Items="@JukeboxService.Queue" T="Tune" MultiSelection="true"
+                             Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
+                             SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
+                             Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+                    <Columns>
+                        <PropertyColumn Property="@(tune => tune.Name)" />
+                        <PropertyColumn Property="@(tune => tune.Plays)" Class="justify-right" CellClass="justify-right" />
+                        <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" Class="justify-right" CellClass="justify-right" />
+                        <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
+                            <CellTemplate>
+                                <MudStack Row>
+                                    <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
+                                </MudStack>
+                            </CellTemplate>
+                        </PropertyColumn>
+                        <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" Filterable="false" Title="MIDI Tracks" />
+                        <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" Filterable="false" Title="MIDI Messages" />
+                    </Columns>
+                    <PagerContent>
+                        <MudDataGridPager T="Tune" PageSizeOptions="@([30, 50, 100, 200])" />
+                    </PagerContent>
+                </MudDataGrid>
+            }
+        </MudStack>
+    </MudStack>
 }

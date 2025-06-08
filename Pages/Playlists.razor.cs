@@ -6,11 +6,6 @@
 public partial class Playlists
 {
     /// <summary>
-    /// Gets or sets the NavigationManager.
-    /// </summary>
-    [Inject] NavigationManager NavigationManager { get; set; }
-
-    /// <summary>
     /// Gets or sets the JukeboxService.
     /// </summary>
     [Inject] JukeboxService JukeboxService { get; set; }
@@ -30,20 +25,17 @@ public partial class Playlists
     /// </summary>
     [Parameter] public string Tag { get; set; }
 
+    [Parameter] public EventCallback OnUpdate { get; set; }
+
     /// <summary>
     /// Represents the list of Tunes.
     /// </summary>
-    private List<Tune> Tunes;
+    private List<Tune> Tunes { get; set; }
 
-    /// <summary>
-    /// Called when the component is initialized.
-    /// </summary>
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
-        NavigationManager.LocationChanged += (s, e) => DoNavTo();
-        await JukeboxService.GetJukeboxAsync();
-        DoNavTo();
-        await base.OnInitializedAsync();
+        Tunes = JukeboxService.Tunes;
+        return base.OnInitializedAsync();
     }
 
     /// <summary>
@@ -59,51 +51,9 @@ public partial class Playlists
                 return true;
             if (tune.Tags?.Any(tag => Playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
                 return true;
+            return false;
         }
-        return false;
-    }
-
-    /// <summary>
-    /// Navigates to the specified Playlist or Tag.
-    /// </summary>
-    protected void DoNavTo()
-    {
-        if (!JukeboxService.Loaded) return;
-
-        if (!string.IsNullOrWhiteSpace(Tag))
-        {
-            Playlist = Tag;
-            Tunes = JukeboxService.Tunes
-                .Where(t => t.Tags.Any(tag => tag.Equals(tag, StringComparison.CurrentCultureIgnoreCase))
-                        || (t.Name?.StartsWith(Tag, StringComparison.CurrentCultureIgnoreCase) ?? false))
-                .ToList();
-        }
-        else if (!string.IsNullOrWhiteSpace(Playlist))
-        {
-            var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
-            if (p != null)
-            {
-                Tunes = p.Tunes;
-            }
-            else if (Playlist.Equals("all", StringComparison.CurrentCultureIgnoreCase))
-            {
-                Tunes = JukeboxService.Tunes;
-            }
-            else if (Playlist.Equals("orphan", StringComparison.CurrentCultureIgnoreCase))
-            {
-                var comparer = new Tune();
-                var pltunes = JukeboxService.Playlists.SelectMany(p => p.Tunes).Distinct(comparer);
-                Tunes = JukeboxService.Tunes.Except(pltunes, comparer).Where(t => t.Durationms > 0).ToList();
-            }
-        }
-        else
-        {
-            // default to ALL
-            Playlist = "All";
-            Tunes = JukeboxService.Tunes;
-        }
-
-        StateHasChanged();
+        return true;
     }
 
     /// <summary>
@@ -111,12 +61,32 @@ public partial class Playlists
     /// </summary>
     protected void DoSearch()
     {
-        if (string.IsNullOrWhiteSpace(Playlist)) return;
-        Tunes = JukeboxService.Tunes
+        if (!string.IsNullOrWhiteSpace(Playlist) && !Playlist.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase))
+        {
+            Tunes = JukeboxService.Tunes
             .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
                 || (t.Name?.StartsWith(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
             .ToList();
+        }
+        else if (!string.IsNullOrWhiteSpace(Tag))
+        {
+            Playlist = $"tag:{Tag}";
+            Tunes = JukeboxService.Tunes
+                .Where(t => t.Tags.Any(tag => tag.Contains(Tag, StringComparison.CurrentCultureIgnoreCase)))
+                .ToList();
+        }
+        else
+        {
+            Tunes = JukeboxService.Tunes;
+        }
+
         StateHasChanged();
+    }
+
+    protected void SelectTag(string tag)
+    {
+        Tag = tag;
+        DoSearch();
     }
 
     /// <summary>
@@ -133,6 +103,7 @@ public partial class Playlists
                 ID = ObjectId.NewObjectId(),
                 Tunes = Tunes
             });
+            OnUpdate.InvokeAsync();
             StateHasChanged();
         }
     }

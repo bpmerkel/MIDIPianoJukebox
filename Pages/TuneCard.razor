@@ -4,10 +4,6 @@
             <MudText Typo="Typo.h6">@Tune.Name</MudText>
         </CardHeaderContent>
         <CardHeaderActions>
-            @if (OnRatingChanged.HasDelegate)
-            {
-                <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(Tune.Rating))" MaxValue="5" SelectedValueChanged="DoRatingChanged" />
-            }
             @if (OnEnqueue.HasDelegate)
             {
                 <MudIconButton Icon="@Icons.Material.Filled.AddToQueue" OnClick="@(_ => DoEnqueue())" title="Add to Queue" />
@@ -22,29 +18,34 @@
         <MudSimpleTable Dense="true" Hover="false" Bordered="false" Striped="false">
             <thead>
                 <tr>
-                    <th>Duration</th>
-                    <th>Tracks</th>
-                    <th>Messages</th>
                     <th>Plays</th>
-                    @if (!OnRatingChanged.HasDelegate)
+                    <th>Duration</th>
+                    @if (OnRatingChanged.HasDelegate)
                     {
                         <th>Rating</th>
                     }
+                    <th>MIDI Tracks</th>
+                    <th>MIDI Messages</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
+                    <td>@Tune.Plays</td>
                     <td>@Tune.Duration.ToString("m\\:ss")</td>
+                    @if (OnRatingChanged.HasDelegate)
+                    {
+                        <td><MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(Tune.Rating))" MaxValue="5" SelectedValueChanged="DoRatingChanged" /></td>
+                    }
                     <td>@Tune.Tracks</td>
                     <td>@($"{Tune.Messages:#,##0}")</td>
-                    <td>@Tune.Plays</td>
-                    @if (!OnRatingChanged.HasDelegate)
-                    {
-                        <td>@Tune.Rating</td>
-                    }
                 </tr>
                 <tr>
-                    <td colspan="6"><TagList Tune="@Tune" /></td>
+                    <td colspan="6">
+                        @foreach (var tag in Tune.Tags)
+                        {
+                            <MudChip T="string" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">@tag</MudChip>
+                        }
+                    </td>
                 </tr>
             </tbody>
         </MudSimpleTable>
