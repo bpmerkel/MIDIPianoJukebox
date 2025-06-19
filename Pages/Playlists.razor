@@ -1,4 +1,4 @@
-<MudDataGrid Items="@Tunes" T="Tune"
+<MudDataGrid @ref="dg" Items="@Tunes" T="Tune"
     Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
     Groupable="true" GroupExpanded="true"
     SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
@@ -40,6 +40,6 @@
         }
     </ChildRowContent>
     <PagerContent>
-        <MudDataGridPager T="Tune" PageSizeOptions="@([30, 50, 100, 200])" />
+        <MudDataGridPager T="Tune" PageSizeSelector="false" />
     </PagerContent>
 </MudDataGrid>
