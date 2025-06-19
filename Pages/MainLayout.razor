@@ -3,7 +3,7 @@
 <MudThemeProvider IsDarkMode="true" />
 <MudDialogProvider
     FullWidth="true"
-    MaxWidth="MaxWidth.Medium"
+    MaxWidth="MaxWidth.ExtraLarge"
     CloseButton="true"
     NoHeader="false"
     Position="DialogPosition.Center"
@@ -11,18 +11,16 @@
 <MudSnackbarProvider />
 <MudPopoverProvider />
 
-<MudLayout>
-    <MudAppBar>
-        <MudAppBar Color="Color.Primary" Fixed="false" Dense="true" Elevation="4">
-            <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
-                <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="/">MIDI Piano Jukebox</MudButton>
-                <MudSpacer />
-            </MudHidden>
-            <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
-            <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
-        </MudAppBar>
+<MudAppBar>
+    <MudAppBar Color="Color.Primary" Fixed="true" Dense="true" Elevation="4">
+        <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
+            <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="/">MIDI Piano Jukebox</MudButton>
+            <MudSpacer />
+        </MudHidden>
+        <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
     </MudAppBar>
-    <MudMainContent Class="ml-6 mr-6">
-        @Body
-    </MudMainContent>
-</MudLayout>
+</MudAppBar>
+<div class="mt-15 ml-6 mr-6">
+    @Body
+</div>

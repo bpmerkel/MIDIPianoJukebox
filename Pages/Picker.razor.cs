@@ -38,16 +38,17 @@ public partial class Picker
     // open the Playlist dialog box
     protected async Task AddNew()
     {
-        //var parameters = new DialogParameters<Playlists>
-        //{
-        //    { x => x.OnUpdate, DoRefresh }
-        //};
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraLarge
+        };
+
         var parameters = new DialogParameters
         {
             { "OnUpdate", EventCallback.Factory.Create(this, DoRefresh) }
         };
 
-        var result = await DialogService.ShowAsync<Playlists>("Add new playlist", parameters);
+        var result = await DialogService.ShowAsync<Playlists>("Add new playlist", parameters, options);
         DoRefresh();
         await InvokeAsync(StateHasChanged);
     }

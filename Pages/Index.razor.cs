@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the Index page.
 /// </summary>
-public partial class Index
+public partial class Index: IBrowserViewportObserver, IAsyncDisposable
 {
     /// <summary>
     /// Gets or sets the NavigationManager.
@@ -14,6 +14,8 @@ public partial class Index
     /// Gets or sets the JukeboxService.
     /// </summary>
     [Inject] JukeboxService JukeboxService { get; set; }
+
+    [Inject] IBrowserViewportService BrowserViewportService { get; set; }
 
     /// <summary>
     /// Gets or sets the Playlist.
@@ -40,13 +42,27 @@ public partial class Index
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
         await JukeboxService.GetJukeboxAsync();
         JukeboxService.ProgressChanged = p => InvokeAsync(StateHasChanged);
         JukeboxService.ReadyToPlayNext += (s, a) => InvokeAsync(() => DoPlayNext(null));
         NavigationManager.LocationChanged += async (s, e) => await DoNavTo();
         await DoNavTo();
+        await base.OnInitializedAsync();
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync() => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
     /// <summary>
     /// Navigates to the specified Playlist.
@@ -148,5 +164,22 @@ public partial class Index
     {
         JukeboxService.StopPlayer();
         await InvokeAsync(StateHasChanged);
+    }
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 100,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
+    {
+        if (dg == null) return Task.CompletedTask;
+        //_width = browserViewportEventArgs.BrowserWindowSize.Width;
+        var browserHeight = browserViewportEventArgs.BrowserWindowSize.Height;
+        browserHeight -= 64 + 72 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
+        var rows = browserHeight / 41; // Assuming each row is approximately 41px tall
+        dg.SetRowsPerPageAsync(rows);
+        return InvokeAsync(StateHasChanged);
     }
 }

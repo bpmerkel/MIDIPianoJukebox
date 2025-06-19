@@ -22,16 +22,16 @@
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="@(tune => tune.Name)" />
-        <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" Class="justify-right" CellClass="justify-right" />
-        <PropertyColumn Property="@(tune => tune.Rating)" Class="justify-right" CellClass="justify-right">
+        <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" CellStyle="text-align: center" />
+        <PropertyColumn Property="@(tune => tune.Rating)">
             <CellTemplate>
                 <MudStack Row>
                     <MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(context.Item.Rating))" ReadOnly="true" />
                 </MudStack>
             </CellTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="@(tune => tune.Tracks)" Class="justify-right" CellClass="justify-right" />
-        <PropertyColumn Property="@(tune => tune.Messages)" Class="justify-right" CellClass="justify-right" Format="#,##0" />
+        <PropertyColumn Property="@(tune => tune.Tracks)" CellStyle="text-align: center" />
+        <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" CellStyle="text-align: center" />
     </Columns>
     <ChildRowContent>
         @foreach (var tag in @context.Item.Tags)
