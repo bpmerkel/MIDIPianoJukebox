@@ -20,7 +20,7 @@
 	<ItemGroup>
 		<PackageReference Include="LiteDB" Version="5.0.21" />
 		<PackageReference Include="managed-midi" Version="1.10.1" />
-		<PackageReference Include="MudBlazor" Version="8.10.0" />
+		<PackageReference Include="MudBlazor" Version="8.11.0" />
 	</ItemGroup>
 
 	<ItemGroup>
