@@ -110,14 +110,24 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     public async Task GetJukeboxAsync()
     {
-        if (Loaded) return;
+        if (Loaded)
+        {
+            return;
+        }
 
         await Task.Run(() =>
         {
-            if (Loaded) return;
+            if (Loaded)
+            {
+                return;
+            }
+
             lock (syncroot)
             {
-                if (Loaded) return;
+                if (Loaded)
+                {
+                    return;
+                }
 
                 var tunes = repo.Database.GetCollection<Tune>();
                 var playlists = repo.Database.GetCollection<Playlist>();
@@ -211,17 +221,26 @@ public partial class JukeboxService : IDisposable
                     }
 
                     var music = GetMusic(file.FullName);
-                    if (music == null) return;
+                    if (music == null)
+                    {
+                        return;
+                    }
 
                     var duration = music.GetTotalPlayTimeMilliseconds();
-                    if (duration < 1000) return;
+                    if (duration < 1000)
+                    {
+                        return;
+                    }
 
                     var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
 
                     var tune = repo.Query<Tune>()
                         .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
                         .FirstOrDefault();
-                    if (!doUpdates && tune != null) return;
+                    if (!doUpdates && tune != null)
+                    {
+                        return;
+                    }
 
                     var name = Path.GetFileNameWithoutExtension(file.Name);
                     var tracksCount = music.Tracks.Count;
@@ -441,7 +460,10 @@ public partial class JukeboxService : IDisposable
     private void PlayPlayer()
     {
         // spin wait until stopped, if pending a stop
-        while (isStopping) Thread.Sleep(100);
+        while (isStopping)
+        {
+            Thread.Sleep(100);
+        }
 
         if (CurrentPlayer == null)
         {
@@ -494,8 +516,15 @@ public partial class JukeboxService : IDisposable
     /// <param name="m">The MIDI event received.</param>
     private void Player_EventReceived(MidiEvent m)
     {
-        if (CurrentPlayer == null) return;
-        if (CurrentPlayer.State != PlayerState.Playing) return;
+        if (CurrentPlayer == null)
+        {
+            return;
+        }
+
+        if (CurrentPlayer.State != PlayerState.Playing)
+        {
+            return;
+        }
 
         // be aware, if user does play next when event is firing, player may come back as null...
         // a.EventType, a.Channel, a.StatusByte, a.Value
@@ -506,7 +535,10 @@ public partial class JukeboxService : IDisposable
         RemainingTime = TimeSpan.FromMilliseconds(TotalTime - time);
 
         var newp = $"{progress:P0}-{CurrentTime.TotalSeconds:#}";
-        if (prior != newp) Progress = 100 * progress;  // which also signals a UI update
+        if (prior != newp)
+        {
+            Progress = 100 * progress;  // which also signals a UI update
+        }
     }
 
     /// <summary>
@@ -514,18 +546,29 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     public void StopPlayer()
     {
-        if (CurrentPlayer == null) return;
+        if (CurrentPlayer == null)
+        {
+            return;
+        }
+
         if (isStopping)
         {
             // spin wait until stopped
-            while (isStopping) Thread.Sleep(100);
+            while (isStopping)
+            {
+                Thread.Sleep(100);
+            }
         }
         else
         {
             isStopping = true;
             CurrentPlayer.Stop();
             // spin wait until stopped
-            while (CurrentPlayer.State != PlayerState.Stopped) Thread.Sleep(100);
+            while (CurrentPlayer.State != PlayerState.Stopped)
+            {
+                Thread.Sleep(100);
+            }
+
             CurrentPlayer.EventReceived -= Player_EventReceived;
             CurrentPlayer.PlaybackCompletedToEnd -= Player_Finished;
             Progress = 0;
@@ -544,7 +587,11 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     public void PausePlayer()
     {
-        if (CurrentPlayer == null) return;
+        if (CurrentPlayer == null)
+        {
+            return;
+        }
+
         if (CurrentPlayer.State != PlayerState.Paused)
         {
             try
@@ -560,7 +607,11 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     public void ResumePlayer()
     {
-        if (CurrentPlayer == null) return;
+        if (CurrentPlayer == null)
+        {
+            return;
+        }
+
         if (CurrentPlayer.State != PlayerState.Playing)
         {
             CurrentPlayer.Play();
@@ -573,7 +624,11 @@ public partial class JukeboxService : IDisposable
     /// <param name="ticks">The number of ticks to skip.</param>
     public void SkipPlayer(int ticks)
     {
-        if (CurrentPlayer == null) return;
+        if (CurrentPlayer == null)
+        {
+            return;
+        }
+
         SkipPlayerTo(CurrentPlayer.PlayDeltaTime + ticks);
     }
 
@@ -583,7 +638,11 @@ public partial class JukeboxService : IDisposable
     /// <param name="ticks">The tick to skip to.</param>
     public void SkipPlayerTo(int ticks)
     {
-        if (CurrentPlayer == null || ticks < 0) return;
+        if (CurrentPlayer == null || ticks < 0)
+        {
+            return;
+        }
+
         CurrentPlayer.Seek(ticks);
         ResumePlayer();
     }
@@ -638,7 +697,11 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (CurrentPlayer != null) StopPlayer();
+        if (CurrentPlayer != null)
+        {
+            StopPlayer();
+        }
+
         repo.Dispose();
         GC.SuppressFinalize(this);
     }

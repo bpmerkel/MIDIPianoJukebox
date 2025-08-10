@@ -9,14 +9,17 @@ public partial class Picker
     /// Gets or sets the list of Playlists.
     /// </summary>
     private List<Playlist> Playlists { get; set; }
+
     /// <summary>
     /// Gets or sets the JukeboxService.
     /// </summary>
     [Inject] JukeboxService JukeboxService { get; set; }
+
     /// <summary>
     /// Gets or sets the NavigationManager.
     /// </summary>
     [Inject] NavigationManager NavigationManager { get; set; }
+
     [Inject] IDialogService DialogService { get; set; }
 
     protected override async Task OnInitializedAsync()

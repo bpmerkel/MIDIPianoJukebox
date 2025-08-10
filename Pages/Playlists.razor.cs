@@ -69,9 +69,15 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         if (Playlist != null)
         {
             if (tune.Name?.Contains(Playlist, StringComparison.OrdinalIgnoreCase) ?? false)
+            {
                 return true;
+            }
+
             if (tune.Tags?.Any(tag => Playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
+            {
                 return true;
+            }
+
             return false;
         }
         return true;
@@ -168,7 +174,11 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
 
     Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
     {
-        if (dg == null) return Task.CompletedTask;
+        if (dg == null)
+        {
+            return Task.CompletedTask;
+        }
+
         var browserHeight = browserViewportEventArgs.BrowserWindowSize.Height;
         browserHeight -= 64 + 72 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
         var rows = browserHeight / 41; // Assuming each row is approximately 41px tall

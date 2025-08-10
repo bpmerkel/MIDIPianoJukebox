@@ -30,7 +30,10 @@ public partial class AlignToPlaylist
     /// </summary>
     protected void DoSavePlaylist()
     {
-        if (Tunes.Count == 0) return;
+        if (Tunes.Count == 0)
+        {
+            return;
+        }
 
         // get each playlist in isSelected and add all tunes to them
         foreach (var entry in isSelected)

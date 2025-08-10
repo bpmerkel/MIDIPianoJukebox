@@ -6,9 +6,6 @@ builder.Services.AddRazorPages();
 // Add Server Side Blazor services to the DI container
 builder.Services.AddServerSideBlazor();
 
-// Add HttpClient to the DI container
-builder.Services.AddScoped<HttpClient>();
-
 // Add JukeboxService to the DI container
 builder.Services.AddSingleton<JukeboxService>();
 

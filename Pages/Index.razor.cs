@@ -69,7 +69,10 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoNavTo()
     {
-        if (!JukeboxService.Loaded) return;
+        if (!JukeboxService.Loaded)
+        {
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(Playlist))
         {
@@ -174,7 +177,11 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
 
     Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
     {
-        if (dg == null) return Task.CompletedTask;
+        if (dg == null)
+        {
+            return Task.CompletedTask;
+        }
+
         //_width = browserViewportEventArgs.BrowserWindowSize.Width;
         var browserHeight = browserViewportEventArgs.BrowserWindowSize.Height;
         browserHeight -= 64 + 72 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
