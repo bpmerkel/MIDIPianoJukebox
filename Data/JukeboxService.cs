@@ -20,7 +20,7 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Object for thread synchronization.
     /// </summary>
-    private readonly object syncroot = new();
+    private readonly Lock syncroot = new();
 
     /// <summary>
     /// Gets a value indicating whether the jukebox is loaded.

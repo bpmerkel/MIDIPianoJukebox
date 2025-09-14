@@ -55,7 +55,11 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    public async ValueTask DisposeAsync() => await BrowserViewportService.UnsubscribeAsync(this);
+    public async ValueTask DisposeAsync()
+    {
+        await BrowserViewportService.UnsubscribeAsync(this);
+        GC.SuppressFinalize(this);
+    }
 
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
