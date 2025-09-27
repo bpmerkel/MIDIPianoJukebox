@@ -11,6 +11,7 @@
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Deterministic>false</Deterministic>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -19,7 +20,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="LiteDB" Version="5.0.21" />
-		<PackageReference Include="managed-midi" Version="1.10.1" />
 		<PackageReference Include="MudBlazor" Version="8.12.0" />
 	</ItemGroup>
 
@@ -27,6 +27,20 @@
 		<Content Update="wwwroot\giphy.gif">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\midi-module-catalog.txt" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\ms_gs_wavetable_synth.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\roland_sc-55.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\roland_sc-55mk2.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\roland_sc-88.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\roland_sc-8820.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\roland_sc-88pro.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\yamaha_motif-rack.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\yamaha_motif-rack_es.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\yamaha_motif.midimod" />
+		<EmbeddedResource Include="Commons.Music.Midi\module-database\data\yamaha_mu2000ex.midimod" />
 	</ItemGroup>
 
 </Project>
