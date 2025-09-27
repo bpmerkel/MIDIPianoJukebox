@@ -1,25 +1,27 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode="true" />
-<MudDialogProvider
-    FullWidth="true"
-    MaxWidth="MaxWidth.ExtraLarge"
-    CloseButton="true"
-    NoHeader="false"
-    Position="DialogPosition.Center"
-    CloseOnEscapeKey="true" />
+<MudThemeProvider @bind-IsDarkMode="DarkMode" />
+<MudDialogProvider FullWidth="true"
+                   MaxWidth="MaxWidth.ExtraLarge"
+                   CloseButton="true"
+                   NoHeader="false"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true" />
 <MudSnackbarProvider />
 <MudPopoverProvider />
 
-<MudAppBar>
-    <MudAppBar Color="Color.Primary" Fixed="true" Dense="true" Elevation="4">
-        <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
-            <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="/">MIDI Piano Jukebox</MudButton>
-            <MudSpacer />
-        </MudHidden>
-        <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
-        <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
-    </MudAppBar>
+<MudAppBar Color="Color.Primary" Fixed="true" Dense="true" Elevation="4">
+    <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
+        <MudButton StartIcon="@Icons.Material.Filled.QueueMusic" Color="Color.Inherit" Href="/">MIDI Piano Jukebox</MudButton>
+        <MudSpacer />
+    </MudHidden>
+    <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="OpenSettingsDialog">Settings</MudButton>
+    <MudButton StartIcon="@Icons.Material.Filled.Help" Color="Color.Inherit" OnClick="OpenAboutDialog">About</MudButton>
+    <MudToggleIconButton Toggled="@DarkMode" ToggledChanged="@(d => ToggleDarkMode(d))"
+        Icon="@Icons.Material.Filled.DarkMode"
+        ToggledIcon="@Icons.Material.Filled.LightMode"
+        Color="Color.Default"
+        ToggledColor="@Color.Surface" />
 </MudAppBar>
 <div class="mt-15 ml-6 mr-6">
     @Body

@@ -1,16 +1,26 @@
+using Blazored.LocalStorage;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add Razor Pages services to the DI container
 builder.Services.AddRazorPages();
 
 // Add Server Side Blazor services to the DI container
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(30); // Adjust timeout
+        options.HandshakeTimeout = TimeSpan.FromSeconds(15); // Adjust handshake timeout
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15); // Adjust keep-alive interval
+        options.EnableDetailedErrors = true; // Enable detailed errors
+    });
 
 // Add JukeboxService to the DI container
 builder.Services.AddSingleton<JukeboxService>();
 
 // Add MudBlazor services to the DI container
 builder.Services.AddMudServices();
+builder.Services.AddBlazoredLocalStorage();
 
 // Configure IISServerOptions
 builder.Services.Configure<IISServerOptions>(options =>

@@ -1,3 +1,6 @@
+using MudBlazor;
+using System.Reflection.Emit;
+
 namespace MIDIPianoJukebox.Pages;
 
 /// <summary>
@@ -9,6 +12,9 @@ public partial class MainLayout
     /// Gets or sets the DialogService.
     /// </summary>
     [Inject] IDialogService DialogService { get; set; }
+    [Inject] Blazored.LocalStorage.ILocalStorageService LocalStorage { get; set; }
+
+    private bool DarkMode { get; set; } = true;
 
     /// <summary>
     /// Opens the About dialog.
@@ -19,4 +25,15 @@ public partial class MainLayout
     /// Opens the Settings dialog.
     /// </summary>
     void OpenSettingsDialog() => DialogService.ShowAsync<Settings>("Settings");
+
+    protected override async Task OnInitializedAsync()
+    {
+        DarkMode = await LocalStorage.GetItemAsync<bool>("DarkMode");
+    }
+
+    private async Task ToggleDarkMode(bool value)
+    {
+        DarkMode = value;
+        await LocalStorage.SetItemAsync("DarkMode", DarkMode);
+    }
 }
