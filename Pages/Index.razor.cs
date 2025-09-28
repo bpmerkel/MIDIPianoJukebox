@@ -173,6 +173,16 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
+    protected async Task SelectTune(Tune tune)
+    {
+        if (tune == null)
+        {
+            return;
+        }
+        JukeboxService.Play(tune);
+        await InvokeAsync(StateHasChanged);
+    }
+
     ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
     {
         ReportRate = 100,
@@ -188,7 +198,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
 
         //_width = browserViewportEventArgs.BrowserWindowSize.Width;
         var browserHeight = browserViewportEventArgs.BrowserWindowSize.Height;
-        browserHeight -= 64 + 72 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
+        browserHeight -= 64 + 278 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
         var rows = browserHeight / 41; // Assuming each row is approximately 41px tall
         dg.SetRowsPerPageAsync(rows);
         return InvokeAsync(StateHasChanged);
