@@ -379,6 +379,23 @@ public partial class JukeboxService : IDisposable
     }
 
     /// <summary>
+    /// Set and play a specific Tune from the queue.
+    /// </summary>
+    /// <param name="tune">The tune to play.</param>
+    public void Play(Tune tune)
+    {
+        var found = Queue.FirstOrDefault(t => t.ID == tune.ID);
+        if (found != null)
+        {
+            // interrupt any current playing Tune
+            StopPlayer();
+            Queue.Remove(found);
+            Tune = tune;
+            PlayPlayer();
+        }
+    }
+
+    /// <summary>
     /// Enqueues a tune to the jukebox queue.
     /// </summary>
     /// <param name="tune">The tune to enqueue.</param>

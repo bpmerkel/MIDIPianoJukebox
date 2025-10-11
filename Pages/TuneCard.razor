@@ -1,18 +1,8 @@
 ﻿<MudCard>
     <MudCardHeader Class="pb-0">
         <CardHeaderContent>
-            <MudText Typo="Typo.h6">@Tune.Name</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Warning">@Tune.Name</MudText>
         </CardHeaderContent>
-        <CardHeaderActions>
-            @if (OnEnqueue.HasDelegate)
-            {
-                <MudIconButton Icon="@Icons.Material.Filled.AddToQueue" OnClick="@(_ => DoEnqueue())" title="Add to Queue" />
-            }
-            @if (OnDequeue.HasDelegate)
-            {
-                <MudIconButton Icon="@Icons.Material.Filled.RemoveFromQueue" OnClick="@(_ => DoDequeue())" title="Remove from Queue" />
-            }
-        </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent Class="pa-0">
         <MudSimpleTable Dense="true" Hover="false" Bordered="false" Striped="false">

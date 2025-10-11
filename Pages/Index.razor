@@ -51,11 +51,12 @@ else
             </MudPaper>
             @if (JukeboxService.Queue.Any())
             {
-                <MudDataGrid @ref="dg" Items="@JukeboxService.Queue" T="Tune" MultiSelection="true"
+                <MudDataGrid @ref="dg" T="Tune" Items="@JukeboxService.Queue" MultiSelection="false" SelectedItemChanged="@SelectTune"
                              Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
                              SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
-                             Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+                             Virtualize="true" FixedHeader="true">
                     <Columns>
+                        <HierarchyColumn T="Tune" />
                         <PropertyColumn Property="@(tune => tune.Name)" />
                         <PropertyColumn Property="@(tune => tune.Plays)" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" CellStyle="text-align: center" />
@@ -69,6 +70,9 @@ else
                         <PropertyColumn Property="@(tune => tune.Tracks)" Filterable="false" Title="MIDI Tracks" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" Filterable="false" Title="MIDI Messages" CellStyle="text-align: center" />
                     </Columns>
+                    <ChildRowContent>
+                        @string.Join(", ", context.Item.Tags)
+                    </ChildRowContent>
                     <PagerContent>
                         <MudDataGridPager T="Tune" PageSizeSelector="false" />
                     </PagerContent>
