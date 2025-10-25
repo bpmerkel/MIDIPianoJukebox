@@ -21,11 +21,6 @@ public partial class Settings
     protected bool Processing { get; set; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether to perform updates during the database refresh operation.
-    /// </summary>
-    protected bool DoUpdatesToo { get; set; } = true;
-
-    /// <summary>
     /// Gets or sets the path to the MIDI files.
     /// </summary>
     protected string MIDIPath { get { return JukeboxService.Settings.MIDIPath; } set { JukeboxService.Settings.MIDIPath = value; } }
@@ -66,7 +61,7 @@ public partial class Settings
     {
         Processing = true;
         JukeboxService.SaveSettings();
-        await JukeboxService.RefreshDatabaseAsync(DoUpdatesToo, msg => AddLog(msg), prg => UpdateProgress(prg));
+        await JukeboxService.RefreshDatabaseAsync(msg => AddLog(msg), prg => UpdateProgress(prg));
         Processing = false;
         await InvokeAsync(StateHasChanged);
     }

@@ -10,7 +10,7 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Connection string for the database.
     /// </summary>
-    private const string cxstring = @"Filename=jukebox.db;Upgrade=true";
+    private const string cxstring = "Filename=jukebox.db;Mode=shared;Upgrade=true";
 
     /// <summary>
     /// Repository for accessing the database.
@@ -149,13 +149,6 @@ public partial class JukeboxService : IDisposable
                     .Where(t => t.Filepath != null)
                     .Where(t => t.Durationms > 60_000)
                     .Where(t => t.Rating != 1f) // rating of 1 means remove it
-                    .AsParallel()
-                    //.Where(t => File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
-                    .Select(t =>
-                    {
-                        t.Name = t.Name.Replace('_', ' ');
-                        return t;
-                    })
                     .OrderBy(t => t.Name)
                     .ToList();
 
@@ -180,9 +173,9 @@ public partial class JukeboxService : IDisposable
     /// <param name="doUpdates">Whether to perform updates.</param>
     /// <param name="logger">The logger action.</param>
     /// <param name="progress">The progress action.</param>
-    public Task RefreshDatabaseAsync(bool doUpdates, Action<string> logger, Action<double> progress)
+    public Task RefreshDatabaseAsync(Action<string> logger, Action<double> progress)
     {
-        return Task.Run(() =>
+        return Task.Run(async () =>
         {
             logger($"Updating database {cxstring} from MIDI files in {Settings.MIDIPath}");
             var files = new DirectoryInfo(Settings.MIDIPath)
@@ -203,51 +196,50 @@ public partial class JukeboxService : IDisposable
             var re2 = ConvertToSpace();
             var reIgnore = Ignore();
             var counter = 0;
-            var inserted = 0;
-            var updated = 0;
             var sw = Stopwatch.StartNew();
-            files.AsParallel().ForAll(file =>
+
+            var toRemove = repo.Database.GetCollection<Tune>().FindAll()
+                .Where(t => !File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
+                .ToList();
+            logger($"Removing {toRemove.Count:#,##0} missing tunes");
+            toRemove.ForEach(t => repo.Delete<Tune>(t.ID));
+
+            files.ForEach(file =>
             {
                 try
                 {
+                    var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
+
                     Interlocked.Increment(ref counter);
-                    if (counter % 1000 == 0 || counter == total)
+                    if (counter % 500 == 0 || counter == total)
                     {
                         var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
                         var msleft = (total - counter) / rate; // = ms
                         var eta = DateTime.Now.AddMilliseconds(msleft);
-                        logger($"{(total - counter):#,##0} {inserted:#,##0} {updated:#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {file.FullName}");
+                        logger($"{(total - counter):#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {subpath}");
                         progress(100 * counter / total);
                     }
 
                     var music = GetMusic(file.FullName);
+
                     if (music == null)
                     {
                         return;
                     }
 
                     var duration = music.GetTotalPlayTimeMilliseconds();
-                    if (duration < 1000)
+
+                    if (duration < 60_000)
                     {
                         return;
                     }
 
-                    var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
-
-                    var tune = repo.Query<Tune>()
-                        .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
-                        .FirstOrDefault();
-                    if (!doUpdates && tune != null)
-                    {
-                        return;
-                    }
-
-                    var name = Path.GetFileNameWithoutExtension(file.Name);
+                    var name = Path.GetFileNameWithoutExtension(file.Name).Replace('_', ' ');
                     var tracksCount = music.Tracks.Count;
-                    var messages = music.Tracks.SelectMany(track => track.Messages).ToList();
-                    var messagesCount = messages.Count;
-                    var events = messages.Select(msg => msg.Event).ToList();
-                    var eventsCount = events.Count;
+                    var messages = music.Tracks.SelectMany(track => track.Messages).ToArray();
+                    var messagesCount = messages.Length;
+                    var events = messages.Select(msg => msg.Event).ToArray();
+                    var eventsCount = events.Length;
                     var tags = events
                         .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text || e.Msb == MidiMetaType.InstrumentName))
                         .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
@@ -259,9 +251,13 @@ public partial class JukeboxService : IDisposable
                         .Select(m => ToTitleCase(m))
                         .OrderBy(m => m)
                         .Distinct()
-                        .ToList();
+                        .ToArray();
 
                     // add/update the tune
+                    var tune = repo.Query<Tune>()
+                        .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
+                        .FirstOrDefault();
+
                     if (tune != null)
                     {
                         tune.Name = name;
@@ -274,7 +270,6 @@ public partial class JukeboxService : IDisposable
                         // tune.Rating // leave alone
                         // tune.AddedUtc // leave alone
                         repo.Update(tune);
-                        updated++;
                     }
                     else
                     {
@@ -290,8 +285,7 @@ public partial class JukeboxService : IDisposable
                             Rating = 0f,
                             AddedUtc = DateTime.UtcNow
                         });
-                        inserted++;
-                    };
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -300,9 +294,12 @@ public partial class JukeboxService : IDisposable
                 }
             });
 
-            logger("Shrinking Database...");
-            repo.Database.Rebuild();
-            logger("Database refresh complete");
+            //logger("Shrinking Database...");
+            //repo.Database.Rebuild();
+            //logger("Database refresh complete");
+
+            Loaded = false;
+            await GetJukeboxAsync();
         });
     }
 
@@ -345,6 +342,7 @@ public partial class JukeboxService : IDisposable
         if (!string.IsNullOrWhiteSpace(playlistName))
         {
             var playlist = Playlists.FirstOrDefault(p => p.Name.Equals(playlistName, StringComparison.CurrentCultureIgnoreCase));
+
             if (playlist != null)
             {
                 Playlists.Remove(playlist);
@@ -385,6 +383,7 @@ public partial class JukeboxService : IDisposable
     public void Play(Tune tune)
     {
         var found = Queue.FirstOrDefault(t => t.ID == tune.ID);
+
         if (found != null)
         {
             // interrupt any current playing Tune
@@ -485,6 +484,7 @@ public partial class JukeboxService : IDisposable
         if (CurrentPlayer == null)
         {
             var music = GetMusic();
+
             if (music != null)
             {
                 outputDevice = GetDevice();
@@ -511,10 +511,12 @@ public partial class JukeboxService : IDisposable
     {
         // will need this to signal next tune in the queue
         Tune.Plays += 1;
+
         if (Tune.Rating < 1f)    // if we got here and a rating hasn't been assigned, then default to 3
         {
             Tune.Rating = 3f;
         }
+
         Signal_next();
     }
 
@@ -552,6 +554,7 @@ public partial class JukeboxService : IDisposable
         RemainingTime = TimeSpan.FromMilliseconds(TotalTime - time);
 
         var newp = $"{progress:P0}-{CurrentTime.TotalSeconds:#}";
+
         if (prior != newp)
         {
             Progress = 100 * progress;  // which also signals a UI update
@@ -580,6 +583,7 @@ public partial class JukeboxService : IDisposable
         {
             isStopping = true;
             CurrentPlayer.Stop();
+
             // spin wait until stopped
             while (CurrentPlayer.State != PlayerState.Stopped)
             {
@@ -669,7 +673,7 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     /// <returns>The music for the current tune.</returns>
     private MidiMusic GetMusic() => GetMusic(Path.Combine(Settings.MIDIPath, Tune.Filepath));
-    
+
     /// <summary>
     /// Gets the music from a MIDI file.
     /// </summary>
@@ -685,6 +689,7 @@ public partial class JukeboxService : IDisposable
         catch
         {
         }
+
         return null;
     }
 

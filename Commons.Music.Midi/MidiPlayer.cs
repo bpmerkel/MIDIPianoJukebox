@@ -1,5 +1,7 @@
 namespace Commons.Music.Midi;
 
+public delegate void MidiEventAction(MidiEvent m);
+
 public enum PlayerState
 {
     Stopped,
@@ -8,7 +10,7 @@ public enum PlayerState
 }
 
 // Event loop implementation.
-class MidiEventLooper : IDisposable
+public class MidiEventLooper : IDisposable
 {
     public MidiEventLooper(IList<MidiMessage> messages, IMidiPlayerTimeManager timeManager, int deltaTimeSpec)
     {
@@ -29,16 +31,16 @@ class MidiEventLooper : IDisposable
     public event Action Starting;
     public event Action Finished;
     public event Action PlaybackCompletedToEnd;
-    readonly IMidiPlayerTimeManager time_manager;
-    readonly IList<MidiMessage> messages;
-    readonly int delta_time_spec;
+    private readonly IMidiPlayerTimeManager time_manager;
+    private readonly IList<MidiMessage> messages;
+    private readonly int delta_time_spec;
 
     // FIXME: I prefer ManualResetEventSlim (but it causes some regressions)
-    readonly ManualResetEvent pause_handle = new(false);
-    bool do_pause, do_stop;
+    private readonly ManualResetEvent pause_handle = new(false);
+    private bool do_pause, do_stop;
     internal double tempo_ratio = 1.0;
     internal PlayerState state;
-    int event_idx = 0;
+    private int event_idx = 0;
     internal int current_tempo = MidiMetaType.DefaultTempo;
     internal byte[] current_time_signature = new byte[4];
     internal int play_delta_time;
@@ -59,7 +61,7 @@ class MidiEventLooper : IDisposable
         state = PlayerState.Playing;
     }
 
-    void Mute()
+    private void Mute()
     {
         for (var i = 0; i < 16; i++)
         {
@@ -78,9 +80,11 @@ class MidiEventLooper : IDisposable
         Starting?.Invoke();
         event_idx = 0;
         play_delta_time = 0;
+
         while (true)
         {
             pause_handle.WaitOne();
+
             if (do_stop)
             {
                 break;
@@ -93,6 +97,7 @@ class MidiEventLooper : IDisposable
                 state = PlayerState.Paused;
                 continue;
             }
+
             if (event_idx == messages.Count)
             {
                 break;
@@ -100,6 +105,7 @@ class MidiEventLooper : IDisposable
 
             ProcessMessage(messages[event_idx++]);
         }
+
         do_stop = false;
         Mute();
         state = PlayerState.Stopped;
@@ -112,13 +118,14 @@ class MidiEventLooper : IDisposable
         Finished?.Invoke();
     }
 
-    int GetContextDeltaTimeInMilliseconds(int deltaTime) => (int)(current_tempo / 1000 * deltaTime / delta_time_spec / tempo_ratio);
+    private int GetContextDeltaTimeInMilliseconds(int deltaTime) => (int)(current_tempo / 1000 * deltaTime / delta_time_spec / tempo_ratio);
 
-    void ProcessMessage(MidiMessage m)
+    private void ProcessMessage(MidiMessage m)
     {
         if (seek_processor != null)
         {
             var result = seek_processor.FilterMessage(m);
+
             switch (result)
             {
                 case SeekFilterResult.PassAndTerminate:
@@ -156,7 +163,7 @@ class MidiEventLooper : IDisposable
         OnEvent(m.Event);
     }
 
-    void OnEvent(MidiEvent m) => EventReceived?.Invoke(m);
+    private void OnEvent(MidiEvent m) => EventReceived?.Invoke(m);
 
     public void Stop()
     {
@@ -183,38 +190,12 @@ class MidiEventLooper : IDisposable
 // Provides asynchronous player control.
 public class MidiPlayer : IDisposable
 {
-    public MidiPlayer(MidiMusic music)
-        : this(music, MidiAccessManager.Empty)
-    {
-    }
-
-    public MidiPlayer(MidiMusic music, IMidiAccess access)
-        : this(music, access, new SimpleAdjustingMidiPlayerTimeManager())
-    {
-    }
-
     public MidiPlayer(MidiMusic music, IMidiOutput output)
-        : this(music, output, new SimpleAdjustingMidiPlayerTimeManager())
-    {
-    }
-
-    public MidiPlayer(MidiMusic music, IMidiPlayerTimeManager timeManager)
-        : this(music, MidiAccessManager.Empty, timeManager)
-    {
-    }
-
-    public MidiPlayer(MidiMusic music, IMidiAccess access, IMidiPlayerTimeManager timeManager)
-        : this(music, access.OpenOutputAsync(access.Outputs.First().Id).Result, timeManager)
-    {
-        should_dispose_output = true;
-    }
-
-    public MidiPlayer(MidiMusic music, IMidiOutput output, IMidiPlayerTimeManager timeManager)
     {
         ArgumentNullException.ThrowIfNull(music);
         ArgumentNullException.ThrowIfNull(output);
-        ArgumentNullException.ThrowIfNull(timeManager);
 
+        var timeManager = new SimpleAdjustingMidiPlayerTimeManager();
         this.music = music;
         this.output = output;
 
@@ -236,14 +217,6 @@ public class MidiPlayer : IDisposable
         {
             switch (m.EventType)
             {
-                case MidiEvent.NoteOn:
-                case MidiEvent.NoteOff:
-                    if (channel_mask != null && channel_mask[m.Channel])
-                    {
-                        return; // ignore messages for the masked channel.
-                    }
-
-                    goto default;
                 case MidiEvent.SysEx1:
                 case MidiEvent.SysEx2:
                     if (buffer.Length <= m.ExtraDataLength)
@@ -258,6 +231,8 @@ public class MidiPlayer : IDisposable
                 case MidiEvent.Meta:
                     // do nothing.
                     break;
+                case MidiEvent.NoteOn:
+                case MidiEvent.NoteOff:
                 default:
                     var size = MidiEvent.FixedDataSize(m.StatusByte);
                     buffer[0] = m.StatusByte;
@@ -269,21 +244,13 @@ public class MidiPlayer : IDisposable
         };
     }
 
-    readonly MidiEventLooper player;
+    private readonly MidiEventLooper player;
     // FIXME: it is still awkward to have it here. Move it into MidiEventLooper.
-    Task sync_player_task;
-    readonly IMidiOutput output;
-    readonly IList<MidiMessage> messages;
-    readonly MidiMusic music;
-    readonly bool should_dispose_output;
-    byte[] buffer = new byte[0x100];
-    bool[] channel_mask;
-
-    public event Action Finished
-    {
-        add { player.Finished += value; }
-        remove { player.Finished -= value; }
-    }
+    private Task sync_player_task;
+    private readonly IMidiOutput output;
+    private readonly IList<MidiMessage> messages;
+    private readonly MidiMusic music;
+    private byte[] buffer = new byte[0x100];
 
     public event Action PlaybackCompletedToEnd
     {
@@ -293,16 +260,9 @@ public class MidiPlayer : IDisposable
 
     public PlayerState State => player.state;
 
-    public double TempoChangeRatio
-    {
-        get => player.tempo_ratio;
-        set => player.tempo_ratio = value;
-    }
-
     public int Tempo => player.current_tempo;
     public int Bpm => (int)(60.0 / Tempo * 1000000.0);
     // You can break the data at your own risk but I take performance precedence.
-    public byte[] TimeSignature => player.current_time_signature;
     public int PlayDeltaTime => player.play_delta_time;
     public TimeSpan PositionInTime => TimeSpan.FromMilliseconds(music.GetTimePositionInMillisecondsForTick(PlayDeltaTime));
     public int GetTotalPlayTimeMilliseconds() => MidiMusic.GetTotalPlayTimeMilliseconds(messages, music.DeltaTimeSpec);
@@ -316,10 +276,8 @@ public class MidiPlayer : IDisposable
     public virtual void Dispose()
     {
         player.Stop();
-        if (should_dispose_output)
-        {
-            output.Dispose();
-        }
+        output.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public void Play()
@@ -365,32 +323,14 @@ public class MidiPlayer : IDisposable
     }
 
     public void Seek(int ticks) => player.Seek(null, ticks);
-
-    public void SetChannelMask(bool[] channelMask)
-    {
-        if (channelMask != null && channelMask.Length != 16)
-        {
-            throw new ArgumentException("Unexpected length of channelMask array; it must be an array of 16 elements.");
-        }
-
-        channel_mask = channelMask;
-        // additionally send all sound off for the muted channels.
-        for (var ch = 0; ch < channelMask.Length; ch++)
-        {
-            if (channelMask[ch])
-            {
-                output.Send([(byte)(0xB0 + ch), 120, 0], 0, 3, 0);
-            }
-        }
-    }
 }
 
-interface ISeekProcessor
+public interface ISeekProcessor
 {
     SeekFilterResult FilterMessage(MidiMessage message);
 }
 
-enum SeekFilterResult
+public enum SeekFilterResult
 {
     Pass,
     Block,
@@ -398,7 +338,7 @@ enum SeekFilterResult
     BlockAndTerminate,
 }
 
-class SimpleSeekProcessor(int ticks) : ISeekProcessor
+public class SimpleSeekProcessor(int ticks) : ISeekProcessor
 {
     private readonly int seek_to = ticks;
     private int current;
@@ -406,6 +346,7 @@ class SimpleSeekProcessor(int ticks) : ISeekProcessor
     public SeekFilterResult FilterMessage(MidiMessage message)
     {
         current += message.DeltaTime;
+
         if (current >= seek_to)
         {
             return SeekFilterResult.PassAndTerminate;
@@ -418,4 +359,3 @@ class SimpleSeekProcessor(int ticks) : ISeekProcessor
         };
     }
 }
-

@@ -8,7 +8,7 @@
             foreach (var p in JukeboxService.Playlists)
             {
                 // are all the tunes shown in the table, also in this playlist?
-                if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)))
+                if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)) && !isSelected.ContainsKey(p))
                 {
                     isSelected.Add(p, true);
                 }

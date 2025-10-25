@@ -23,7 +23,7 @@ public class Tune : IEqualityComparer<Tune>
     /// <summary>
     /// Gets or sets the tags associated with the tune.
     /// </summary>
-    public List<string> Tags { get; set; } = [];
+    public string[] Tags { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the date and time when the tune was added in UTC.

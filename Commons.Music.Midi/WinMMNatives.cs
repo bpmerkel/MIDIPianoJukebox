@@ -1,167 +1,88 @@
 ﻿namespace Commons.Music.Midi.WinMM;
 
-[StructLayout (LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-struct MidiInCaps
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+public struct MidiOutCaps
 {
-	public short Mid;
-	public short Pid;
-	public int DriverVersion;
-	[MarshalAs (UnmanagedType.ByValTStr, SizeConst = WinMMNatives.MaxPNameLen)]
-	public string Name;
-	public int Support;
+    public short Mid;
+    public short Pid;
+    public int DriverVersion;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = WinMMNatives.MaxPNameLen)]
+    public string Name;
+    public short Technology;
+    public short Voices;
+    public short Notes;
+    public short ChannelMask;
+    public int Support;
 }
 
-[StructLayout (LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-struct MidiOutCaps
+[StructLayout(LayoutKind.Sequential)]
+public struct MidiHdr
 {
-	public short Mid;
-	public short Pid;
-	public int DriverVersion;
-	[MarshalAs (UnmanagedType.ByValTStr, SizeConst = WinMMNatives.MaxPNameLen)]
-	public string Name;
-	public short Technology;
-	public short Voices;
-	public short Notes;
-	public short ChannelMask;
-	public int Support;
-}
-
-[StructLayout (LayoutKind.Sequential)]
-struct MidiHdr
-{
-	public IntPtr Data;
-	public int BufferLength;
-	public int BytesRecorded;
-	public IntPtr User;
-	public int Flags;
-	public IntPtr Next; // of MidiHdr
-	public IntPtr Reserved;
-	public int Offset;
-	[MarshalAs (UnmanagedType.ByValArray, SizeConst = 4)]
-	private readonly int[] reservedArray;
-}
-
-[Flags]
-public enum MidiInOpenFlags
-{
-	Null = 0,
-	Window = 0x10000,
-	Task = 0x20000,
-	Function = 0x30000,
-	MidiIoStatus = 0x00020,
+    public IntPtr Data;
+    public int BufferLength;
+    public int BytesRecorded;
+    public IntPtr User;
+    public int Flags;
+    public IntPtr Next; // of MidiHdr
+    public IntPtr Reserved;
+    public int Offset;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+    private readonly int[] reservedArray;
 }
 
 [Flags]
 public enum MidiOutOpenFlags
 {
-	Null,
-	Function,
-	Thread,
-	Window,
-	Event,
+    Null,
+    Function,
+    Thread,
+    Window,
+    Event,
 }
 
-public enum MidiInMessage : uint
+public delegate void MidiOutProc(IntPtr midiOut, uint msg, IntPtr instance, IntPtr param1, IntPtr param2);
+
+public static partial class WinMMNatives
 {
-	Open = 0x3C1,
-	Close = 0x3C2,
-	Data = 0x3C3,
-	LongData = 0x3C4,
-	Error = 0x3C5,
-	LongError = 0x3C6,
-	MoreData = 0x3CC
-}
+    public const string LibraryName = "winmm";
+    public const int MaxPNameLen = 32;
 
-public delegate void MidiInProc (IntPtr midiIn, MidiInMessage msg, IntPtr instance, IntPtr param1, IntPtr param2);
-public delegate void MidiOutProc (IntPtr midiOut, uint msg, IntPtr instance, IntPtr param1, IntPtr param2);
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutGetNumDevs();
 
-public static class WinMMNatives
-{
-	public const string LibraryName = "winmm";
-	public const int MaxPNameLen = 32;
+    [DllImport(LibraryName)]
+    internal static extern int midiOutGetDevCaps(UIntPtr uDeviceID, out MidiOutCaps midiOutCaps, uint sizeOfMidiOutCaps);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInGetNumDevs ();
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutOpen(out IntPtr midiIn, uint deviceID, MidiOutProc callback, IntPtr callbackInstance, MidiOutOpenFlags flags);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiOutGetNumDevs ();
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutClose(IntPtr midiIn);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInGetDevCaps (UIntPtr uDeviceID, out MidiInCaps midiInCaps, uint sizeOfMidiInCaps);
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutShortMsg(IntPtr handle, uint msg);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiOutGetDevCaps (UIntPtr uDeviceID, out MidiOutCaps midiOutCaps, uint sizeOfMidiOutCaps);
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutLongMsg(IntPtr handle, IntPtr midiOutHdr, int midiOutHdrSize);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInOpen (out IntPtr midiIn, uint deviceID, MidiInProc callback, IntPtr callbackInstance, MidiInOpenFlags flags);
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutPrepareHeader(IntPtr handle, IntPtr midiOutHdr, int midiOutHdrSize);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInPrepareHeader (IntPtr handle, IntPtr headerPtr, int sizeOfMidiHeader);
+    [LibraryImport(LibraryName)]
+    internal static partial int midiOutUnprepareHeader(IntPtr handle, IntPtr headerPtr, int sizeOfMidiHeader);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInUnprepareHeader (IntPtr handle, IntPtr headerPtr, int sizeOfMidiHeader);
+    [DllImport(LibraryName, CharSet = CharSet.Unicode)]
+    internal static extern int midiOutGetErrorText(int mmrError, StringBuilder message, int sizeOfMessage);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInAddBuffer (IntPtr handle, IntPtr headerPtr, int sizeOfMidiHeader);
+    internal static string GetMidiOutErrorText(int code, int maxLength = 128)
+    {
+        var errorMsg = new StringBuilder(maxLength);
 
-	[DllImport (LibraryName)]
-	internal static extern int midiOutOpen (out IntPtr midiIn, uint deviceID, MidiOutProc callback, IntPtr callbackInstance, MidiOutOpenFlags flags);
+        if (midiOutGetErrorText(code, errorMsg, maxLength) == 0)
+        {
+            return errorMsg.ToString();
+        }
 
-	[DllImport (LibraryName)]
-	internal static extern int midiInStart (IntPtr midiIn);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiInStop (IntPtr midiIn);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiInClose (IntPtr midiIn);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutClose (IntPtr midiIn);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutMessage (IntPtr handle, uint msg, ref int dw1, ref int dw2);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutShortMsg (IntPtr handle, uint msg);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutLongMsg (IntPtr handle, IntPtr midiOutHdr, int midiOutHdrSize);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutPrepareHeader (IntPtr handle, IntPtr midiOutHdr, int midiOutHdrSize);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutUnprepareHeader (IntPtr handle, IntPtr headerPtr, int sizeOfMidiHeader);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiInReset (IntPtr handle);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiOutGetErrorText (int mmrError, StringBuilder message, int sizeOfMessage);
-
-	[DllImport (LibraryName)]
-	internal static extern int midiInGetErrorText (int mmrError, StringBuilder message, int sizeOfMessage);
-
-	internal static string GetMidiOutErrorText (int code, int maxLength = 128)
-	{
-		StringBuilder errorMsg = new(maxLength);
-
-		if (midiOutGetErrorText (code, errorMsg, maxLength) == 0) {
-			return errorMsg.ToString ();
-		}
-
-		return "Unknown winmm midi output error";
-	}
-
-	internal static string GetMidiInErrorText (int code, int maxLength = 128)
-	{
-		StringBuilder errorMsg = new(maxLength);
-
-		if (midiInGetErrorText (code, errorMsg, maxLength) == 0) {
-			return errorMsg.ToString ();
-		}
-
-		return "Unknown winmm midi input error";
-	}
+        return "Unknown winmm midi output error";
+    }
 }

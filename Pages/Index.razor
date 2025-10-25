@@ -10,10 +10,10 @@
 }
 else
 {
-    <MudStack Row="true" Breakpoint="Breakpoint.None" Wrap="Wrap.NoWrap">
+    <MudStack Row="true" Breakpoint="Breakpoint.None" Wrap="Wrap.NoWrap" Style="width: 100%">
         <Picker />
-        <MudStack>
-            <MudPaper Elevation="4" Class="mb-5">
+        <MudStack Style="width: 100%">
+            <MudPaper Elevation="4" Class="mb-5" Style="width: 100%">
                 <MudText Typo="Typo.h6">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
                 <MudButton StartIcon="@Icons.Material.Filled.Shuffle" OnClick="@(m => Shuffle = !Shuffle)" Color="Color.Primary" Variant="@(Shuffle? Variant.Filled: Variant.Text)">Shuffle</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="DoPlayNext" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
