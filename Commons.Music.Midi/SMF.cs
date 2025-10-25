@@ -26,15 +26,9 @@ public class MidiMusic
 
     public IList<MidiTrack> Tracks => tracks;
 
-    public IEnumerable<MidiMessage> GetMetaEventsOfType(byte metaType)
-    {
-        if (Format != 0)
-        {
-            return SmfTrackMerger.Merge(this).GetMetaEventsOfType(metaType);
-        }
-
-        return GetMetaEventsOfType(tracks[0].Messages, metaType);
-    }
+    public IEnumerable<MidiMessage> GetMetaEventsOfType(byte metaType) => Format != 0
+        ? SmfTrackMerger.Merge(this).GetMetaEventsOfType(metaType)
+        : GetMetaEventsOfType(tracks[0].Messages, metaType);
 
     public static IEnumerable<MidiMessage> GetMetaEventsOfType(IEnumerable<MidiMessage> messages, byte metaType)
     {
@@ -49,35 +43,17 @@ public class MidiMusic
         }
     }
 
-    public int GetTotalTicks()
-    {
-        if (Format != 0)
-        {
-            return SmfTrackMerger.Merge(this).GetTotalTicks();
-        }
+    public int GetTotalTicks() => Format != 0
+        ? SmfTrackMerger.Merge(this).GetTotalTicks()
+        : Tracks[0].Messages.Sum(m => m.DeltaTime);
 
-        return Tracks[0].Messages.Sum(m => m.DeltaTime);
-    }
+    public int GetTotalPlayTimeMilliseconds() => Format != 0
+        ? SmfTrackMerger.Merge(this).GetTotalPlayTimeMilliseconds()
+        : GetTotalPlayTimeMilliseconds(Tracks[0].Messages, DeltaTimeSpec);
 
-    public int GetTotalPlayTimeMilliseconds()
-    {
-        if (Format != 0)
-        {
-            return SmfTrackMerger.Merge(this).GetTotalPlayTimeMilliseconds();
-        }
-
-        return GetTotalPlayTimeMilliseconds(Tracks[0].Messages, DeltaTimeSpec);
-    }
-
-    public int GetTimePositionInMillisecondsForTick(int ticks)
-    {
-        if (Format != 0)
-        {
-            return SmfTrackMerger.Merge(this).GetTimePositionInMillisecondsForTick(ticks);
-        }
-
-        return GetPlayTimeMillisecondsAtTick(Tracks[0].Messages, ticks, DeltaTimeSpec);
-    }
+    public int GetTimePositionInMillisecondsForTick(int ticks) => Format != 0
+        ? SmfTrackMerger.Merge(this).GetTimePositionInMillisecondsForTick(ticks)
+        : GetPlayTimeMillisecondsAtTick(Tracks[0].Messages, ticks, DeltaTimeSpec);
 
     public static int GetTotalPlayTimeMilliseconds(IList<MidiMessage> messages, int deltaTimeSpec) => GetPlayTimeMillisecondsAtTick(messages, messages.Sum(m => m.DeltaTime), deltaTimeSpec);
 
@@ -113,6 +89,8 @@ public class MidiMusic
 
 public class MidiTrack
 {
+    public IList<MidiMessage> Messages { init; get; }
+
     public MidiTrack()
         : this([])
     {
@@ -121,19 +99,14 @@ public class MidiTrack
     public MidiTrack(IList<MidiMessage> messages)
     {
         ArgumentNullException.ThrowIfNull(messages);
-        this.messages = messages as List<MidiMessage> ?? [.. messages];
+        Messages = messages as List<MidiMessage> ?? [.. messages];
     }
-
-    private readonly List<MidiMessage> messages;
-
-    public IList<MidiMessage> Messages => messages;
 }
 
 public readonly struct MidiMessage(int deltaTime, MidiEvent evt)
 {
     public readonly int DeltaTime = deltaTime;
     public readonly MidiEvent Event = evt;
-    public override string ToString() => $"[dt{DeltaTime}]{Event}";
 }
 
 public static class MidiMetaType
@@ -252,21 +225,18 @@ public struct MidiEvent
     public readonly byte Msb => (byte)((Value & 0xFF00) >> 8);
     public readonly byte Lsb => (byte)((Value & 0xFF0000) >> 16);
 
-    public static byte FixedDataSize(byte statusByte)
+    public static byte FixedDataSize(byte statusByte) => (statusByte & 0xF0) switch
     {
-        return (statusByte & 0xF0) switch
+        // and 0xF7, 0xFF
+        0xF0 => statusByte switch
         {
-            // and 0xF7, 0xFF
-            0xF0 => statusByte switch
-            {
-                MtcQuarterFrame or SongSelect => 1,
-                SongPositionPointer => 2,
-                _ => 0,// no fixed data
-            },
-            Program or CAf => 1,
-            _ => 2,
-        };
-    }
+            MtcQuarterFrame or SongSelect => 1,
+            SongPositionPointer => 2,
+            _ => 0,// no fixed data
+        },
+        Program or CAf => 1,
+        _ => 2,
+    };
 }
 
 public class SmfReader
@@ -453,13 +423,16 @@ public class SmfReader
         try
         {
             current_track_size++;
+
             if (peek_byte >= 0)
             {
                 var b = (byte)peek_byte;
                 peek_byte = -1;
                 return b;
             }
+
             var ret = stream.ReadByte();
+
             if (ret < 0)
             {
                 throw ParseError("Insufficient stream. Failed to read a byte.");

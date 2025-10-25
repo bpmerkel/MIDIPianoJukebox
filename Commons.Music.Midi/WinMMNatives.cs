@@ -77,12 +77,8 @@ public static partial class WinMMNatives
     internal static string GetMidiOutErrorText(int code, int maxLength = 128)
     {
         var errorMsg = new StringBuilder(maxLength);
-
-        if (midiOutGetErrorText(code, errorMsg, maxLength) == 0)
-        {
-            return errorMsg.ToString();
-        }
-
-        return "Unknown winmm midi output error";
+        return midiOutGetErrorText(code, errorMsg, maxLength) == 0
+            ? errorMsg.ToString()
+            : "Unknown winmm midi output error";
     }
 }

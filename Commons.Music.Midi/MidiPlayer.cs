@@ -34,8 +34,6 @@ public class MidiEventLooper : IDisposable
     private readonly IMidiPlayerTimeManager time_manager;
     private readonly IList<MidiMessage> messages;
     private readonly int delta_time_spec;
-
-    // FIXME: I prefer ManualResetEventSlim (but it causes some regressions)
     private readonly ManualResetEvent pause_handle = new(false);
     private bool do_pause, do_stop;
     internal double tempo_ratio = 1.0;
@@ -125,19 +123,15 @@ public class MidiEventLooper : IDisposable
         if (seek_processor != null)
         {
             var result = seek_processor.FilterMessage(m);
-
             switch (result)
             {
                 case SeekFilterResult.PassAndTerminate:
-                case SeekFilterResult.BlockAndTerminate:
                     seek_processor = null;
                     break;
-            }
-
-            switch (result)
-            {
-                case SeekFilterResult.Block:
                 case SeekFilterResult.BlockAndTerminate:
+                    seek_processor = null;
+                    return; // ignore this event
+                case SeekFilterResult.Block:
                     return; // ignore this event
             }
         }
@@ -245,7 +239,6 @@ public class MidiPlayer : IDisposable
     }
 
     private readonly MidiEventLooper player;
-    // FIXME: it is still awkward to have it here. Move it into MidiEventLooper.
     private Task sync_player_task;
     private readonly IMidiOutput output;
     private readonly IList<MidiMessage> messages;
@@ -261,7 +254,6 @@ public class MidiPlayer : IDisposable
     public PlayerState State => player.state;
 
     public int Tempo => player.current_tempo;
-    public int Bpm => (int)(60.0 / Tempo * 1000000.0);
     // You can break the data at your own risk but I take performance precedence.
     public int PlayDeltaTime => player.play_delta_time;
     public TimeSpan PositionInTime => TimeSpan.FromMilliseconds(music.GetTimePositionInMillisecondsForTick(PlayDeltaTime));
@@ -301,13 +293,9 @@ public class MidiPlayer : IDisposable
 
     public void Pause()
     {
-        switch (State)
+        if (State == PlayerState.Playing)
         {
-            case PlayerState.Playing:
-                player.Pause();
-                return;
-            default: // do nothing
-                return;
+            player.Pause();
         }
     }
 
