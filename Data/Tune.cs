@@ -26,6 +26,11 @@ public class Tune : IEqualityComparer<Tune>
     public string[] Tags { get; set; } = [];
 
     /// <summary>
+    /// Gets the list of instruments used by the tune.
+    /// </summary>
+    public string[] Instruments { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets the date and time when the tune was added in UTC.
     /// </summary>
     public DateTime AddedUtc { get; set; } = DateTime.UtcNow;
@@ -61,22 +66,27 @@ public class Tune : IEqualityComparer<Tune>
     public int Events { get; set; }
 
     /// <summary>
-    /// Gets the duration of the tune as a TimeSpan.
+    /// Gets the duration of the tune as a <see cref="TimeSpan"/>.
     /// </summary>
     [BsonIgnore] public TimeSpan Duration => TimeSpan.FromMilliseconds(Durationms);
 
     /// <summary>
-    /// Determines whether the specified tunes are equal based on their file paths.
+    /// Determines whether two <see cref="Tune"/> instances are equal based on their file paths.
     /// </summary>
     /// <param name="x">The first tune to compare.</param>
     /// <param name="y">The second tune to compare.</param>
-    /// <returns>true if the specified tunes are equal; otherwise, false.</returns>
+    /// <returns>
+    /// <see langword="true"/> if the specified tunes have the same <see cref="Filepath"/> (case-insensitive);
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
     public bool Equals([DisallowNull] Tune x, [DisallowNull] Tune y) => x.Filepath.Equals(y.Filepath, StringComparison.CurrentCultureIgnoreCase);
 
     /// <summary>
     /// Returns a hash code for the specified tune based on its file path.
     /// </summary>
     /// <param name="t">The tune for which to get a hash code.</param>
-    /// <returns>A hash code for the specified tune.</returns>
+    /// <returns>
+    /// A hash code computed from the tune's <see cref="Filepath"/> using a case-insensitive comparison.
+    /// </returns>
     public int GetHashCode([DisallowNull] Tune t) => t.Filepath.GetHashCode(StringComparison.CurrentCultureIgnoreCase);
 }

@@ -2,13 +2,6 @@ namespace Commons.Music.Midi;
 
 public delegate void MidiEventAction(MidiEvent m);
 
-public enum PlayerState
-{
-    Stopped,
-    Playing,
-    Paused,
-}
-
 // Event loop implementation.
 public class MidiEventLooper : IDisposable
 {

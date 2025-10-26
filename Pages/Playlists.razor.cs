@@ -27,6 +27,11 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Parameter] public string Tag { get; set; }
 
+    /// <summary>
+    /// Gets or sets the Instrument.
+    /// </summary>
+    [Parameter] public string Instrument { get; set; }
+
     [Parameter] public EventCallback OnUpdate { get; set; }
 
     /// <summary>
@@ -82,6 +87,11 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 return true;
             }
 
+            if (tune.Instruments?.Any(instrument => Playlist.Contains(instrument, StringComparison.CurrentCultureIgnoreCase)) ?? false)
+            {
+                return true;
+            }
+
             return false;
         }
         return true;
@@ -95,9 +105,9 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(Playlist) && !Playlist.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase))
         {
             Tunes = JukeboxService.Tunes
-            .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
-                || (t.Name?.StartsWith(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
-            .ToList();
+                .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+                    || (t.Name?.StartsWith(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
+                .ToList();
         }
         else if (!string.IsNullOrWhiteSpace(Tag))
         {
@@ -117,6 +127,12 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     protected void SelectTag(string tag)
     {
         Tag = tag;
+        DoSearch();
+    }
+
+    protected void SelectInstrument(string instrument)
+    {
+        Instrument = instrument;
         DoSearch();
     }
 

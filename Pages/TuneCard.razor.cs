@@ -25,7 +25,7 @@ public partial class TuneCard
         {
             Tune.Rating = rating;
             await OnRatingChanged.InvokeAsync(rating);
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

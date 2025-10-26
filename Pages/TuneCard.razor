@@ -30,7 +30,13 @@
                     <td>@($"{Tune.Messages:#,##0}")</td>
                 </tr>
                 <tr>
-                    <td colspan="6">
+                    <td colspan="3">
+                        @foreach (var instrument in Tune.Instruments)
+                        {
+                            <MudChip T="string" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">@instrument</MudChip>
+                        }
+                    </td>
+                    <td colspan="2">
                         @foreach (var tag in Tune.Tags)
                         {
                             <MudChip T="string" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">@tag</MudChip>

@@ -204,95 +204,114 @@ public partial class JukeboxService : IDisposable
             logger($"Removing {toRemove.Count:#,##0} missing tunes");
             toRemove.ForEach(t => repo.Delete<Tune>(t.ID));
 
-            files.ForEach(file =>
-            {
-                try
+            files
+                .AsParallel()
+                .ForAll(file =>
                 {
-                    var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
-
-                    Interlocked.Increment(ref counter);
-                    if (counter % 500 == 0 || counter == total)
+                    try
                     {
-                        var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
-                        var msleft = (total - counter) / rate; // = ms
-                        var eta = DateTime.Now.AddMilliseconds(msleft);
-                        logger($"{(total - counter):#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {subpath}");
-                        progress(100 * counter / total);
-                    }
+                        var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
 
-                    var music = GetMusic(file.FullName);
-
-                    if (music == null)
-                    {
-                        return;
-                    }
-
-                    var duration = music.GetTotalPlayTimeMilliseconds();
-
-                    if (duration < 60_000)
-                    {
-                        return;
-                    }
-
-                    var name = Path.GetFileNameWithoutExtension(file.Name).Replace('_', ' ');
-                    var tracksCount = music.Tracks.Count;
-                    var messages = music.Tracks.SelectMany(track => track.Messages).ToArray();
-                    var messagesCount = messages.Length;
-                    var events = messages.Select(msg => msg.Event).ToArray();
-                    var eventsCount = events.Length;
-                    var tags = events
-                        .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text || e.Msb == MidiMetaType.InstrumentName))
-                        .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
-                        .Select(m => re1.Replace(m, string.Empty))
-                        .Select(m => re2.Replace(m, " ").Trim())
-                        .Where(m => !reIgnore.IsMatch(m))
-                        .Where(m => !string.IsNullOrWhiteSpace(m))
-                        .Where(m => m.Length > 3)
-                        .Select(m => ToTitleCase(m))
-                        .OrderBy(m => m)
-                        .Distinct()
-                        .ToArray();
-
-                    // add/update the tune
-                    var tune = repo.Query<Tune>()
-                        .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
-                        .FirstOrDefault();
-
-                    if (tune != null)
-                    {
-                        tune.Name = name;
-                        tune.Filepath = subpath;
-                        tune.Tracks = tracksCount;
-                        tune.Messages = messagesCount;
-                        tune.Events = eventsCount;
-                        tune.Durationms = duration;
-                        tune.Tags = tags;
-                        // tune.Rating // leave alone
-                        // tune.AddedUtc // leave alone
-                        repo.Update(tune);
-                    }
-                    else
-                    {
-                        repo.Insert(new Tune
+                        Interlocked.Increment(ref counter);
+                        if (counter % 500 == 0 || counter == total)
                         {
-                            Name = name,
-                            Filepath = subpath,
-                            Tracks = tracksCount,
-                            Messages = messagesCount,
-                            Events = eventsCount,
-                            Durationms = duration,
-                            Tags = tags,
-                            Rating = 0f,
-                            AddedUtc = DateTime.UtcNow
-                        });
+                            var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
+                            var msleft = (total - counter) / rate; // = ms
+                            var eta = DateTime.Now.AddMilliseconds(msleft);
+                            logger($"{(total - counter):#,##0} = {(100f * counter / total):##0}% eta: {eta:h:mm:ss} {subpath}");
+                            progress(100 * counter / total);
+                        }
+
+                        var music = GetMusic(file.FullName);
+
+                        if (music == null)
+                        {
+                            return;
+                        }
+
+                        var duration = music.GetTotalPlayTimeMilliseconds();
+
+                        if (duration < 60_000)
+                        {
+                            return;
+                        }
+
+                        var name = Path.GetFileNameWithoutExtension(file.Name).Replace('_', ' ');
+                        var tracksCount = music.Tracks.Count;
+                        var messages = music.Tracks.SelectMany(track => track.Messages).ToArray();
+                        var messagesCount = messages.Length;
+                        var events = messages.Select(msg => msg.Event).ToArray();
+                        var eventsCount = events.Length;
+                        var tags = events
+                            .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text))
+                            .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
+                            .Select(m => re1.Replace(m, string.Empty))
+                            .Select(m => re2.Replace(m, " ").Trim())
+                            .Where(m => !reIgnore.IsMatch(m))
+                            .Where(m => !string.IsNullOrWhiteSpace(m))
+                            .Where(m => m.Length > 3)
+                            .Select(m => ToTitleCase(m))
+                            .OrderBy(m => m)
+                            .Distinct()
+                            .ToArray();
+                        var instruments = events
+                            .Where(e => e.EventType == MidiEvent.Meta && e.Msb == MidiMetaType.InstrumentName)
+                            .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
+                            .Select(m => re1.Replace(m, string.Empty))
+                            .Select(m => re2.Replace(m, " ").Trim())
+                            .Where(m => !reIgnore.IsMatch(m))
+                            .Where(m => !string.IsNullOrWhiteSpace(m))
+                            .Where(m => m.Length > 3)
+                            .Select(m => ToTitleCase(m))
+                            .OrderBy(m => m)
+                            .Distinct()
+                            .ToArray();
+
+                        lock (syncroot)
+                        {
+                            // add/update the tune
+                            var tune = repo.Query<Tune>()
+                                .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
+                                .FirstOrDefault();
+
+                            if (tune != null)
+                            {
+                                tune.Name = name;
+                                tune.Filepath = subpath;
+                                tune.Tracks = tracksCount;
+                                tune.Messages = messagesCount;
+                                tune.Events = eventsCount;
+                                tune.Durationms = duration;
+                                tune.Tags = tags;
+                                tune.Instruments = instruments;
+                                // tune.Rating // leave alone
+                                // tune.AddedUtc // leave alone
+                                repo.Update(tune);
+                            }
+                            else
+                            {
+                                repo.Insert(new Tune
+                                {
+                                    Name = name,
+                                    Filepath = subpath,
+                                    Tracks = tracksCount,
+                                    Messages = messagesCount,
+                                    Events = eventsCount,
+                                    Durationms = duration,
+                                    Tags = tags,
+                                    Instruments = instruments,
+                                    Rating = 0f,
+                                    AddedUtc = DateTime.UtcNow
+                                });
+                            }
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    logger($"Error on {file.FullName}: {ex.Message}");
-                    return;
-                }
-            });
+                    catch (Exception ex)
+                    {
+                        logger($"Error on {file.FullName}: {ex.Message}");
+                        return;
+                    }
+                });
 
             //logger("Shrinking Database...");
             //repo.Database.Rebuild();
@@ -300,6 +319,7 @@ public partial class JukeboxService : IDisposable
 
             Loaded = false;
             await GetJukeboxAsync();
+            logger("Done!");
         });
     }
 

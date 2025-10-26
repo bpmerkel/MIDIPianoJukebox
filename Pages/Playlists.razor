@@ -6,9 +6,9 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">@($"{Tunes?.Count:#,##0}") Tunes</MudText>
         <MudTextField @bind-Value="@Playlist" Placeholder="Search"
-                      Variant="Variant.Outlined" Margin="Margin.Dense"
-                      Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
-                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
+            Variant="Variant.Outlined" Margin="Margin.Dense"
+            Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
         @if (Playlist != null)
         {
             var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
@@ -34,6 +34,10 @@
         <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" CellStyle="text-align: center" />
     </Columns>
     <ChildRowContent>
+        @foreach (var instrument in @context.Item.Instruments)
+        {
+            <MudChip T="string" Variant="Variant.Text" OnClick="@(() => SelectInstrument(instrument))" Color="Color.Primary" Size="Size.Small">@instrument</MudChip>
+        }
         @foreach (var tag in @context.Item.Tags)
         {
             <MudChip T="string" Variant="Variant.Text" OnClick="@(() => SelectTag(tag))" Color="Color.Primary" Size="Size.Small">@tag</MudChip>
