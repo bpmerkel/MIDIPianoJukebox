@@ -7,6 +7,7 @@ global using System.Collections.Concurrent;
 global using System.ComponentModel;
 global using Microsoft.AspNetCore.Components.Web;
 global using Microsoft.AspNetCore.Components;
+global using Blazored.LocalStorage;
 global using MudBlazor;
 global using MudBlazor.Services;
 global using LiteDB;
