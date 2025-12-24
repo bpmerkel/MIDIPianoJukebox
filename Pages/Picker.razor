@@ -6,5 +6,5 @@
             <MudListItem Text="@($"{p.Name} ({p.Tunes.Count:#,##0})")" OnClick="@(() => NavTo(p))" Value="p" Style="white-space: nowrap" />
         }
     </MudList>
-    <MudButton StartIcon="@Icons.Material.Filled.AddCircle" ButtonType="ButtonType.Button" OnClick="@AddNew">Add playlist</MudButton>
+    <MudButton StartIcon="@Icons.Material.Filled.AddCircle" ButtonType="ButtonType.Button" OnClick="@AddNew" Style="text-align: left">Add playlist</MudButton>
 </MudStack>

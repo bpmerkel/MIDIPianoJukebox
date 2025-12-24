@@ -14,7 +14,7 @@ else
         <Picker />
         <MudStack Style="width: 100%">
             <MudPaper Elevation="4" Class="mb-5" Style="width: 100%">
-                <MudText Typo="Typo.h6">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
+                <MudText Typo="Typo.h6" Class="ml-2">@Playlist (@($"{JukeboxService.Queue.Count:#,##0}"))</MudText>
                 <MudButton StartIcon="@Icons.Material.Filled.Shuffle" OnClick="@(m => Shuffle = !Shuffle)" Color="Color.Primary" Variant="@(Shuffle? Variant.Filled: Variant.Text)">Shuffle</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.SkipNext" OnClick="DoPlayNext" Disabled="@(!JukeboxService.Queue.Any())">Play Next</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.PauseCircleFilled" OnClick="DoPause" Disabled="@(JukeboxService.State != PlayerState.Playing)">Pause</MudButton>
@@ -22,6 +22,7 @@ else
                 <MudButton StartIcon="@Icons.Material.Filled.Replay" OnClick="DoReplay" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Replay</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.FastForward" OnClick="DoSkip" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Skip 10</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.Stop" OnClick="DoStop" Disabled="@(JukeboxService.State == PlayerState.Stopped)">Stop</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Edit" OnClick="DoEditPlaylist" Disabled="@(Playlist == null)">Edit Playlist</MudButton>
                 @if (JukeboxService.Tune != null)
                 {
                     <div>
@@ -54,7 +55,7 @@ else
                 <MudDataGrid @ref="dg" T="Tune" Items="@JukeboxService.Queue" MultiSelection="false" SelectedItemChanged="@SelectTune"
                              Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
                              SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
-                             Virtualize="true" FixedHeader="true">
+                             Virtualize="true" FixedHeader="true" Height="calc(100vh - 80px)" RowsPerPage="50">
                     <Columns>
                         <HierarchyColumn T="Tune" />
                         <PropertyColumn Property="@(tune => tune.Name)" />

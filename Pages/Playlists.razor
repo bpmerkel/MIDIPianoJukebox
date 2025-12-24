@@ -1,26 +1,27 @@
 <MudDataGrid @ref="dg" Items="@Tunes" T="Tune"
-    Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
+    Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false" MultiSelection="true" SelectOnRowClick="true" SelectedItems="@SelectedTunes"
     Groupable="true" GroupExpanded="true"
     SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
-    Virtualize="true" FixedHeader="true" Height="calc(100% - 80px)">
+    Virtualize="true" FixedHeader="true" Height="calc(100vh - 80px)" Class="mx-4">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">@($"{Tunes?.Count:#,##0}") Tunes</MudText>
+        <MudText Typo="Typo.h6">@($"{SelectedTunes?.Count:#,##0}") Tunes</MudText>
         <MudTextField @bind-Value="@Playlist" Placeholder="Search"
             Variant="Variant.Outlined" Margin="Margin.Dense"
             Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"
-            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="ml-5 mr-5" />
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" class="mx-5" />
         @if (Playlist != null)
         {
             var exists = JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
-            <MudButton Disabled="@exists" OnClick="@(m => CreatePlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Create Playlist</MudButton>
-            <MudButton Disabled="@(!exists)" OnClick="@(m => ClearPlaylist())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Remove Playlist</MudButton>
-        }
-        @if (Tunes != null)
-        {
-            <MudButton StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(e => OpenDialog())" Disabled="@(!Tunes.Any())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Align</MudButton>
+            <MudButton Disabled="@exists" OnClick="@(m => CreatePlaylist())" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5">Create Playlist</MudButton>
+            @if (Tunes != null)
+            {
+                <MudButton StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(e => OpenDialog())" Disabled="@(!Tunes.Any())" Variant="Variant.Filled" Color="Color.Primary" class="ml-5">Align</MudButton>
+            }
+            <MudButton StartIcon="@Icons.Material.Filled.Delete" OnClick="DoDeletePlaylist" Variant="Variant.Filled" Color="Color.Secondary" Class="ml-5" Disabled="@(PlaylistDoesntExist(Playlist))">Delete Playlist</MudButton>
         }
     </ToolBarContent>
     <Columns>
+        <SelectColumn T="Tune" />
         <PropertyColumn Property="@(tune => tune.Name)" />
         <PropertyColumn Property="@(tune => tune.Duration)" Format="mm\:ss" Filterable="false" CellStyle="text-align: center" />
         <PropertyColumn Property="@(tune => tune.Rating)">

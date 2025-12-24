@@ -8,7 +8,7 @@ public partial class Picker
     /// <summary>
     /// Gets or sets the list of Playlists.
     /// </summary>
-    private List<Playlist> Playlists { get; set; }
+    private List<Playlist> Playlists { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the JukeboxService.
@@ -20,12 +20,21 @@ public partial class Picker
     /// </summary>
     [Inject] NavigationManager NavigationManager { get; set; }
 
+    /// <summary>
+    /// Gets or sets the DialogService.
+    /// </summary>
     [Inject] IDialogService DialogService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         DoRefresh();
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        DoRefresh();
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     protected void NavTo(Playlist p) => NavigationManager.NavigateTo($"/{p.Name}");

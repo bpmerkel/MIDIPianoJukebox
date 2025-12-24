@@ -15,6 +15,9 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Inject] IDialogService DialogService { get; set; }
 
+    /// <summary>
+    /// Gets or sets the BrowserViewportService used to observe viewport changes.
+    /// </summary>
     [Inject] IBrowserViewportService BrowserViewportService { get; set; }
 
     /// <summary>
@@ -32,17 +35,25 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Parameter] public string Instrument { get; set; }
 
+    /// <summary>
+    /// Gets or sets the callback that is invoked when the playlist is updated.
+    /// </summary>
     [Parameter] public EventCallback OnUpdate { get; set; }
 
     /// <summary>
     /// Represents the DataGrid of Tunes.
     /// </summary>
-    MudDataGrid<Tune> dg;
+    private MudDataGrid<Tune> dg;
 
     /// <summary>
     /// Represents the list of Tunes.
     /// </summary>
     private List<Tune> Tunes { get; set; }
+
+    /// <summary>
+    /// Represents the list of selected Tunes.
+    /// </summary>
+    private HashSet<Tune> SelectedTunes { get; set; }
 
     protected override Task OnInitializedAsync()
     {
@@ -116,10 +127,19 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 .Where(t => t.Tags.Any(tag => tag.Contains(Tag, StringComparison.CurrentCultureIgnoreCase)))
                 .ToList();
         }
+        else if (!string.IsNullOrWhiteSpace(Instrument))
+        {
+            Playlist = $"instrument:{Instrument}";
+            Tunes = JukeboxService.Tunes
+                .Where(t => t.Instruments.Any(i => i.Contains(Instrument, StringComparison.CurrentCultureIgnoreCase)))
+                .ToList();
+        }
         else
         {
             Tunes = JukeboxService.Tunes;
         }
+
+        SelectedTunes = Tunes.ToHashSet();
 
         StateHasChanged();
     }
@@ -139,7 +159,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// <summary>
     /// Creates a new Playlist.
     /// </summary>
-    protected void CreatePlaylist()
+    protected async Task CreatePlaylist()
     {
         // if a new playlist is requested, add it
         if (!string.IsNullOrWhiteSpace(Playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase)))
@@ -150,20 +170,19 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 ID = ObjectId.NewObjectId(),
                 Tunes = Tunes
             });
-            OnUpdate.InvokeAsync();
-            StateHasChanged();
+            await OnUpdate.InvokeAsync();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    /// <summary>
-    /// Clears the current Playlist.
-    /// </summary>
-    protected void ClearPlaylist()
+    private async Task DoDeletePlaylist(MouseEventArgs args)
     {
         JukeboxService.ClearPlaylist(Playlist);
-        Playlist = null;
-        StateHasChanged();
+        await OnUpdate.InvokeAsync();
+        await InvokeAsync(StateHasChanged);
     }
+
+    private bool PlaylistDoesntExist(string playlist) => !JukeboxService.Playlists.Exists(p => string.Equals(p.Name, playlist, StringComparison.CurrentCultureIgnoreCase));
 
     /// <summary>
     /// Converts the input string to title case.

@@ -15,7 +15,15 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Inject] JukeboxService JukeboxService { get; set; }
 
+    /// <summary>
+    /// Gets or sets the BrowserViewportService for tracking browser window size changes.
+    /// </summary>
     [Inject] IBrowserViewportService BrowserViewportService { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DialogService.
+    /// </summary>
+    [Inject] IDialogService DialogService { get; set; }
 
     /// <summary>
     /// Gets or sets the Playlist.
@@ -25,17 +33,17 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// <summary>
     /// Represents the Shuffle state.
     /// </summary>
-    bool Shuffle = false;
+    private bool Shuffle = false;
 
     /// <summary>
     /// Represents the DataGrid of Tunes.
     /// </summary>
-    MudDataGrid<Tune> dg;
+    private MudDataGrid<Tune> dg;
 
     /// <summary>
     /// Represents the last sort order.
     /// </summary>
-    string lastSort = string.Empty;
+    private string lastSort = string.Empty;
 
     /// <summary>
     /// Called when the component is initialized.
@@ -202,5 +210,23 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
         var rows = browserHeight / 41; // Assuming each row is approximately 41px tall
         dg.SetRowsPerPageAsync(rows);
         return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task DoEditPlaylist(MouseEventArgs args)
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraLarge
+        };
+
+        var parameters = new DialogParameters
+        {
+            { "Playlist", Playlist },
+            { "OnUpdate", EventCallback.Factory.Create(this, async () => await DoNavTo()) }
+        };
+
+        var result = await DialogService.ShowAsync<Playlists>("Edit playlist", parameters, options);
+        await DoNavTo();
+        await InvokeAsync(StateHasChanged);
     }
 }
