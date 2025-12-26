@@ -100,6 +100,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
             JukeboxService.DequeueAll();
             JukeboxService.EnqueueAll(p.Tunes);
         }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -216,17 +217,29 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     {
         var options = new DialogOptions
         {
-            MaxWidth = MaxWidth.ExtraLarge
+            MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true, CloseButton = true, BackdropClick = true
         };
 
         var parameters = new DialogParameters
         {
             { "Playlist", Playlist },
-            { "OnUpdate", EventCallback.Factory.Create(this, async () => await DoNavTo()) }
+            { "OnUpdate", EventCallback.Factory.Create<bool>(this, async b =>
+                {
+                    if (b)
+                    {
+                        NavigationManager.NavigateTo("/", true);
+                    }
+                    else
+                    {
+                        await DoNavTo();
+                    }
+                })
+            }
         };
 
-        var result = await DialogService.ShowAsync<Playlists>("Edit playlist", parameters, options);
-        await DoNavTo();
+        var dialog = await DialogService.ShowAsync<Playlists>("Edit playlist", parameters, options);
+        var result = await dialog.Result;
+
         await InvokeAsync(StateHasChanged);
     }
 }

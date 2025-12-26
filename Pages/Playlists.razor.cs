@@ -38,7 +38,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// <summary>
     /// Gets or sets the callback that is invoked when the playlist is updated.
     /// </summary>
-    [Parameter] public EventCallback OnUpdate { get; set; }
+    [Parameter] public EventCallback<bool> OnUpdate { get; set; }
 
     /// <summary>
     /// Represents the DataGrid of Tunes.
@@ -51,14 +51,20 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     private List<Tune> Tunes { get; set; }
 
     /// <summary>
-    /// Represents the list of selected Tunes.
+    /// Represents the selected Tunes.
     /// </summary>
     private HashSet<Tune> SelectedTunes { get; set; }
 
-    protected override Task OnInitializedAsync()
+    protected override Task OnParametersSetAsync()
     {
         Tunes = JukeboxService.Tunes;
-        return base.OnInitializedAsync();
+
+        var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
+        SelectedTunes = playlist != null
+            ? Tunes.Intersect(playlist.Tunes, new Tune()).ToHashSet()   // use intersect logic so SelectedTunes are same objects
+            : Tunes.ToHashSet();
+
+        return base.OnParametersSetAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -113,7 +119,9 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected void DoSearch()
     {
-        if (!string.IsNullOrWhiteSpace(Playlist) && !Playlist.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(Playlist)
+            && !Playlist.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase)
+            && !Playlist.StartsWith("instrument:", StringComparison.CurrentCultureIgnoreCase))
         {
             Tunes = JukeboxService.Tunes
                 .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
@@ -138,8 +146,6 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         {
             Tunes = JukeboxService.Tunes;
         }
-
-        SelectedTunes = Tunes.ToHashSet();
 
         StateHasChanged();
     }
@@ -170,15 +176,36 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 ID = ObjectId.NewObjectId(),
                 Tunes = Tunes
             });
-            await OnUpdate.InvokeAsync();
+            await OnUpdate.InvokeAsync(false);
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>
+    /// Save changes to a Playlist.
+    /// </summary>
+    protected async Task SavePlaylist()
+    {
+        if (!string.IsNullOrWhiteSpace(Playlist))
+        {
+            var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
+            if (playlist != null)
+            {
+                var hasdiffs = Tunes.Except(SelectedTunes).Any();
+                if (hasdiffs)
+                {
+                    playlist.Tunes = SelectedTunes.ToList();
+                    JukeboxService.SavePlaylist(playlist);
+                    await OnUpdate.InvokeAsync(false);
+                }
+            }
         }
     }
 
     private async Task DoDeletePlaylist(MouseEventArgs args)
     {
         JukeboxService.ClearPlaylist(Playlist);
-        await OnUpdate.InvokeAsync();
+        await OnUpdate.InvokeAsync(true);
         await InvokeAsync(StateHasChanged);
     }
 
