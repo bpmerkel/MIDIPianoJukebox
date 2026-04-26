@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".github/workflows/dotnet.yml" />
+    <File Path=".gitignore" />
+    <File Path="appsettings.json" />
+    <File Path="Properties/launchSettings.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="MIDIPianoJukebox.csproj" />
+</Solution>
