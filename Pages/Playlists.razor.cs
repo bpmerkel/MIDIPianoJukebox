@@ -92,26 +92,14 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// <returns>True if the tune matches the filter, false otherwise.</returns>
     protected bool QuickFilter(Tune tune)
     {
-        if (Playlist != null)
+        if (Playlist == null)
         {
-            if (tune.Name?.Contains(Playlist, StringComparison.OrdinalIgnoreCase) ?? false)
-            {
-                return true;
-            }
-
-            if (tune.Tags?.Any(tag => Playlist.Contains(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false)
-            {
-                return true;
-            }
-
-            if (tune.Instruments?.Any(instrument => Playlist.Contains(instrument, StringComparison.CurrentCultureIgnoreCase)) ?? false)
-            {
-                return true;
-            }
-
-            return false;
+            return true;
         }
-        return true;
+
+        return (tune.Name?.Contains(Playlist, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (tune.Tags?.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase)) ?? false)
+            || (tune.Instruments?.Any(instr => instr.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase)) ?? false);
     }
 
     /// <summary>
