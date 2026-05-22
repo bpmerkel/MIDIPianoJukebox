@@ -57,7 +57,7 @@ public partial class Picker
 
         var parameters = new DialogParameters
         {
-            { "OnUpdate", EventCallback.Factory.Create(this, DoRefresh) }
+            { "OnUpdate", EventCallback.Factory.Create<bool>(this, DoRefresh) }
         };
 
         var result = await DialogService.ShowAsync<Playlists>("Add new playlist", parameters, options);
