@@ -14,8 +14,9 @@
                     {
                         <th>Rating</th>
                     }
-                    <th>MIDI Tracks</th>
-                    <th>MIDI Messages</th>
+                    <th>Instruments</th>
+                    <th>Tracks</th>
+                    <th>Messages</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,6 +27,7 @@
                     {
                         <td><MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(Tune.Rating))" MaxValue="5" SelectedValueChanged="DoRatingChanged" /></td>
                     }
+                    <td>@Tune.Instruments.Count()</td>
                     <td>@Tune.Tracks</td>
                     <td>@($"{Tune.Messages:#,##0}")</td>
                 </tr>

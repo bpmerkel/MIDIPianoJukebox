@@ -32,6 +32,7 @@
                 </MudStack>
             </CellTemplate>
         </PropertyColumn>
+        <PropertyColumn Property="@(tune => tune.Instruments.Length)" CellStyle="text-align: center" />
         <PropertyColumn Property="@(tune => tune.Tracks)" CellStyle="text-align: center" />
         <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" CellStyle="text-align: center" />
     </Columns>

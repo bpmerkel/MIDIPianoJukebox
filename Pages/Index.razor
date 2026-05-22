@@ -52,7 +52,7 @@ else
             </MudPaper>
             @if (JukeboxService.Queue.Any())
             {
-                <MudDataGrid @ref="dg" T="Tune" Items="@JukeboxService.Queue" MultiSelection="false" SelectedItemChanged="@SelectTune"
+                <MudDataGrid T="Tune" @ref="dg" Items="@JukeboxService.Queue" MultiSelection="false" SelectedItemChanged="@SelectTune"
                              Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
                              SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
                              Virtualize="true" FixedHeader="true" Height="calc(100vh - 80px)" RowsPerPage="50">
@@ -68,8 +68,9 @@ else
                                 </MudStack>
                             </CellTemplate>
                         </PropertyColumn>
-                        <PropertyColumn Property="@(tune => tune.Tracks)" Filterable="false" Title="MIDI Tracks" CellStyle="text-align: center" />
-                        <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" Filterable="false" Title="MIDI Messages" CellStyle="text-align: center" />
+                        <PropertyColumn Property="@(tune => tune.Instruments.Count())" Filterable="false" Title="Instruments" CellStyle="text-align: center" />
+                        <PropertyColumn Property="@(tune => tune.Tracks)" Filterable="false" Title="Tracks" CellStyle="text-align: center" />
+                        <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" Filterable="false" Title="Messages" CellStyle="text-align: center" />
                     </Columns>
                     <ChildRowContent>
                         @string.Join(", ", context.Item.Tags)
