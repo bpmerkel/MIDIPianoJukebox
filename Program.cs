@@ -33,6 +33,7 @@ var app = builder.Build();
 app.UseDeveloperExceptionPage();
 
 // Use static files middleware
+app.MapStaticAssets();
 app.UseStaticFiles();
 
 // Use routing middleware

@@ -55,7 +55,7 @@ else
                 <MudDataGrid T="Tune" @ref="dg" Items="@JukeboxService.Queue" MultiSelection="false" SelectedItemChanged="@SelectTune"
                              Hideable="false" Hover="true" Dense="true" Striped="true" FixedFooter="false"
                              SortMode="@SortMode.Single" Filterable="false" FilterMode="@DataGridFilterMode.ColumnFilterRow"
-                             Virtualize="true" FixedHeader="true" Height="calc(100vh - 80px)" RowsPerPage="50">
+                             Virtualize="true" FixedHeader="true" Height="calc(100vh - 250px)" RowsPerPage="50">
                     <Columns>
                         <HierarchyColumn T="Tune" />
                         <PropertyColumn Property="@(tune => tune.Name)" />
