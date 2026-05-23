@@ -43,6 +43,7 @@ public partial class Picker
     {
         Playlists = JukeboxService.Playlists
             .Where(pp => pp.Tunes.Count > 0)
+            .DistinctBy(pp => pp.Name)
             .OrderBy(pp => pp.Name)
             .ToList();
     }

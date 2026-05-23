@@ -3,28 +3,28 @@
         <MudText Typo="Typo.h4" Color="Color.Warning">Align to Playlists</MudText>
     </TitleContent>
     <DialogContent>
-        @if (!isSelected.Any())
+        @if (!IsSelected.Any())
         {
             foreach (var p in JukeboxService.Playlists)
             {
                 // are all the tunes shown in the table, also in this playlist?
-                if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)) && !isSelected.ContainsKey(p))
+                if (Tunes.Any(t => p.Tunes.Any(tt => tt.ID == t.ID)) && !IsSelected.ContainsKey(p))
                 {
-                    isSelected.Add(p, true);
+                    IsSelected.Add(p, true);
                 }
             }
         }
         
         <MudStack Row="true" Spacing="4">
-            @foreach (var p in JukeboxService.Playlists.OrderBy(pp => pp.Name))
+            @foreach (var p in JukeboxService.Playlists.DistinctBy(pp => pp.Name).OrderBy(pp => pp.Name))
             {
-                isSelected.TryGetValue(p, out bool selected);
+                IsSelected.TryGetValue(p, out bool selected);
                 <MudButton Variant="@(selected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" OnClick="@(m => ToggleSelected(p))">@p.Name</MudButton>
             }
         </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@(e => DoSavePlaylist())">Save</MudButton>
-        <MudButton OnClick="@(e => { isSelected.Clear(); MudDialog.Cancel(); })">Cancel</MudButton>
+        <MudButton OnClick="@(e => { IsSelected.Clear(); MudDialog.Cancel(); })">Cancel</MudButton>
     </DialogActions>
 </MudDialog>

@@ -213,7 +213,7 @@ public partial class JukeboxService : IDisposable
                         var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
 
                         Interlocked.Increment(ref counter);
-                        if (counter % 500 == 0 || counter == total)
+                        if (counter % 1000 == 0 || counter == total)
                         {
                             var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
                             var msleft = (total - counter) / rate; // = ms
@@ -344,7 +344,16 @@ public partial class JukeboxService : IDisposable
 
         if (playlist.Tunes.Count > 0)
         {
-            repo.Upsert(playlist);
+            var already = repo.Query<Playlist>().Where(p => p.ID == playlist.ID);
+            //var inserted = repo.Upsert(playlist);
+            if (already != null)
+            {
+                repo.Update(playlist);
+            }
+            else
+            {
+                repo.Insert(playlist);
+            }
             Playlists.Add(playlist);
         }
         else

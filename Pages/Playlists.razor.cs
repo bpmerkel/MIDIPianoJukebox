@@ -215,8 +215,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         {
             { x => x.Tunes, Tunes }
         };
-        var dialog = DialogService.ShowAsync<AlignToPlaylist>("Align", parameters);
-        var result = await dialog;
+        await DialogService.ShowAsync<AlignToPlaylist>("Align", parameters);
         await InvokeAsync(StateHasChanged);
     }
 
