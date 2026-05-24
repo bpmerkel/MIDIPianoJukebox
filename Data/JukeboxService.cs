@@ -355,7 +355,7 @@ public partial class JukeboxService : IDisposable
         if (playlist.Tunes.Count > 0)
         {
             var already = repo.Query<Playlist>().Where(p => p.ID == playlist.ID);
-            //var inserted = repo.Upsert(playlist);
+
             if (already != null)
             {
                 repo.Update(playlist);
@@ -364,6 +364,7 @@ public partial class JukeboxService : IDisposable
             {
                 repo.Insert(playlist);
             }
+
             Playlists.Add(playlist);
         }
         else

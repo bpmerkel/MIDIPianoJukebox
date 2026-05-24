@@ -30,6 +30,11 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Parameter] public string Playlist { get; set; }
 
+    private List<Playlist> Playlists => JukeboxService.Playlists
+        .DistinctBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase)
+        .OrderBy(p => p.Name)
+        .ToList();
+
     /// <summary>
     /// Represents the Shuffle state.
     /// </summary>
@@ -88,13 +93,13 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
 
         if (string.IsNullOrWhiteSpace(Playlist))
         {
-            Playlist = JukeboxService.Playlists
+            Playlist = Playlists
                 .OrderByDescending(p => p.Tunes?.Count ?? 0)
                 .Select(p => p.Name)
                 .FirstOrDefault();
         }
 
-        var p = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
+        var p = Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
         if (p != null)
         {
             JukeboxService.DequeueAll();

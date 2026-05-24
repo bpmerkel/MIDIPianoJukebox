@@ -163,7 +163,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 ID = ObjectId.NewObjectId(),
                 Tunes = Tunes
             });
-            await OnUpdate.InvokeAsync(false);
+            await OnUpdate.InvokeAsync(true);
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -183,7 +183,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                 {
                     playlist.Tunes = SelectedTunes.ToList();
                     JukeboxService.SavePlaylist(playlist);
-                    await OnUpdate.InvokeAsync(false);
+                    await OnUpdate.InvokeAsync(true);
                 }
             }
             await InvokeAsync(StateHasChanged);
