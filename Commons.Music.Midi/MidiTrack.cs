@@ -12,6 +12,6 @@ public class MidiTrack
     public MidiTrack(IList<MidiMessage> messages)
     {
         ArgumentNullException.ThrowIfNull(messages);
-        Messages = messages as List<MidiMessage> ?? [.. messages];
+        Messages = messages ?? [.. messages];
     }
 }

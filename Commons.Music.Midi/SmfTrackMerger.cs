@@ -28,6 +28,7 @@ public class SmfTrackMerger
         foreach (var track in source.Tracks)
         {
             var delta = 0;
+
             foreach (var mev in track.Messages)
             {
                 delta += mev.DeltaTime;
@@ -52,10 +53,7 @@ public class SmfTrackMerger
         // i.e. [AB] at 48 and [CDE] at 0 should be sorted as
         // [CDE] [AB].
 
-        var idxl = new List<int>(l.Count)
-        {
-            0
-        };
+        var idxl = new List<int>(l.Count) { 0 };
         var prev = 0;
 
         for (var i = 0; i < l.Count; i++)
@@ -67,10 +65,7 @@ public class SmfTrackMerger
             }
         }
 
-        idxl.Sort(delegate (int i1, int i2)
-        {
-            return l[i1].DeltaTime - l[i2].DeltaTime;
-        });
+        idxl.Sort((i1, i2) => l[i1].DeltaTime - l[i2].DeltaTime);
 
         // now build a new event list based on the sorted blocks.
         var l2 = new List<MidiMessage>(l.Count);

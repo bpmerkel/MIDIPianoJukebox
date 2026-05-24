@@ -146,10 +146,12 @@ public class SmfReader
     private int ReadVariableLength()
     {
         var val = 0;
+        
         for (var i = 0; i < 4; i++)
         {
             var b = ReadByte();
             val = (val << 7) + b;
+            
             if (b < 0x80)
             {
                 return val;

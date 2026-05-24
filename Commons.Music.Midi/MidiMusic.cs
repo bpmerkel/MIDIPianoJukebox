@@ -2,16 +2,12 @@ namespace Commons.Music.Midi;
 
 public class MidiMusic
 {
-    #region static members
-
     public static MidiMusic Read(Stream stream)
     {
         var r = new SmfReader();
         r.Read(stream);
         return r.Music;
     }
-
-    #endregion
 
     private readonly List<MidiTrack> tracks = [];
 
@@ -72,12 +68,14 @@ public class MidiMusic
         {
             var deltaTime = t + m.DeltaTime < ticks ? m.DeltaTime : ticks - t;
             v += (double)tempo / 1000 * deltaTime / deltaTimeSpec;
+           
             if (deltaTime != m.DeltaTime)
             {
                 break;
             }
 
             t += m.DeltaTime;
+            
             if (m.Event.EventType == MidiEvent.Meta && m.Event.Msb == MidiMetaType.Tempo)
             {
                 tempo = MidiMetaType.GetTempo(m.Event.ExtraData, m.Event.ExtraDataOffset);

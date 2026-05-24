@@ -7,6 +7,7 @@ public class WinMMMidiAccess : IMidiAccess
         get
         {
             var devs = WinMMNatives.midiOutGetNumDevs();
+
             for (uint i = 0; i < devs; i++)
             {
                 var err = WinMMNatives.midiOutGetDevCaps((UIntPtr)i, out MidiOutCaps caps, (uint)Marshal.SizeOf<MidiOutCaps>());

@@ -1,7 +1,4 @@
 namespace Commons.Music.Midi;
-#region draft API
-
-#endregion
 
 public interface IMidiPortDetails
 {
