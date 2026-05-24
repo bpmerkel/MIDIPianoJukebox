@@ -8,12 +8,7 @@ public partial class Picker
     /// <summary>
     /// Gets or sets the list of Playlists.
     /// </summary>
-    private List<Playlist> Playlists { get; set; } = [];
-
-    /// <summary>
-    /// Gets or sets the JukeboxService.
-    /// </summary>
-    [Inject] JukeboxService JukeboxService { get; set; }
+    [Parameter] public List<Playlist> Playlists { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the NavigationManager.
@@ -25,28 +20,16 @@ public partial class Picker
     /// </summary>
     [Inject] IDialogService DialogService { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        DoRefresh();
-        await base.OnInitializedAsync();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        DoRefresh();
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
     protected void NavTo(Playlist p) => NavigationManager.NavigateTo($"/{p.Name}");
 
-    private void DoRefresh()
-    {
-        Playlists = JukeboxService.Playlists
-            .Where(pp => pp.Tunes.Count > 0)
-            .DistinctBy(pp => pp.Name)
-            .OrderBy(pp => pp.Name)
-            .ToList();
-    }
+    //private void DoRefresh()
+    //{
+    //    Playlists = JukeboxService.Playlists
+    //        .Where(pp => pp.Tunes.Count > 0)
+    //        .DistinctBy(pp => pp.Name)
+    //        .OrderBy(pp => pp.Name)
+    //        .ToList();
+    //}
 
     // open the Playlist dialog box
     protected async Task AddNew()
@@ -58,11 +41,10 @@ public partial class Picker
 
         var parameters = new DialogParameters
         {
-            { "OnUpdate", EventCallback.Factory.Create<bool>(this, DoRefresh) }
+            { "OnUpdate", EventCallback.Factory.Create<bool>(this, StateHasChanged) }
         };
 
         var result = await DialogService.ShowAsync<Playlists>("Add new playlist", parameters, options);
-        DoRefresh();
         await InvokeAsync(StateHasChanged);
     }
 }

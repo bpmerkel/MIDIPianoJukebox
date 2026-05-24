@@ -5,7 +5,7 @@
     SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
     Virtualize="true" FixedHeader="true" Height="calc(100vh - 250px)" Class="mx-4">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">@($"{SelectedTunes?.Count:#,##0}") Tunes</MudText>
+        <MudText Typo="Typo.h6">@($"{Tunes.Count:#,##0}") Tunes</MudText>
         <MudTextField @bind-Value="@Playlist" Placeholder="Search"
             Variant="Variant.Outlined" Margin="Margin.Dense"
             Adornment="Adornment.Start" Immediate="true" Clearable="true" TextChanged="DoSearch"

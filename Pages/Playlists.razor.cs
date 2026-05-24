@@ -26,16 +26,6 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     [Parameter] public string Playlist { get; set; }
 
     /// <summary>
-    /// Gets or sets the Tag.
-    /// </summary>
-    [Parameter] public string Tag { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Instrument.
-    /// </summary>
-    [Parameter] public string Instrument { get; set; }
-
-    /// <summary>
     /// Gets or sets the callback that is invoked when the playlist is updated.
     /// </summary>
     [Parameter] public EventCallback<bool> OnUpdate { get; set; }
@@ -53,7 +43,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// <summary>
     /// Represents the selected Tunes.
     /// </summary>
-    private HashSet<Tune> SelectedTunes { get; set; }
+    private HashSet<Tune> SelectedTunes { get; set; } = [];
 
     protected override Task OnParametersSetAsync()
     {
@@ -86,20 +76,30 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
     /// <summary>
-    /// Filters the tunes based on the Playlist.
+    /// Filters the visible tunes based on the Playlist.
     /// </summary>
     /// <param name="tune">The tune to filter.</param>
     /// <returns>True if the tune matches the filter, false otherwise.</returns>
     protected bool QuickFilter(Tune tune)
     {
-        if (Playlist == null)
+        if (string.IsNullOrWhiteSpace(Playlist))
         {
             return true;
         }
+        else if (Playlist?.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase) ?? false)
+        {
+            var tag = Playlist[4..];
+            return tune.Tags.Any(t => t.Contains(tag, StringComparison.CurrentCultureIgnoreCase));
+        }
+        else if (Playlist?.StartsWith("instrument:", StringComparison.CurrentCultureIgnoreCase) ?? false)
+        {
+            var instrument = Playlist[11..];
+            return tune.Instruments.Any(i => i.Contains(instrument, StringComparison.CurrentCultureIgnoreCase));
+        }
 
-        return (tune.Name?.Contains(Playlist, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (tune.Tags?.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase)) ?? false)
-            || (tune.Instruments?.Any(instr => instr.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase)) ?? false);
+        return tune.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+            || tune.Instruments.Any(i => i.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+            || (tune.Name?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false);
     }
 
     /// <summary>
@@ -107,27 +107,26 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected void DoSearch()
     {
-        if (!string.IsNullOrWhiteSpace(Playlist)
-            && !Playlist.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase)
-            && !Playlist.StartsWith("instrument:", StringComparison.CurrentCultureIgnoreCase))
+        if (Playlist?.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase) ?? false)
+        {
+            var tag = Playlist[4..];
+            Tunes = JukeboxService.Tunes
+                .Where(t => t.Tags.Any(t => t.Contains(tag, StringComparison.CurrentCultureIgnoreCase)))
+                .ToList();
+        }
+        else if (Playlist?.StartsWith("instrument:", StringComparison.CurrentCultureIgnoreCase) ?? false)
+        {
+            var instrument = Playlist[11..];
+            Tunes = JukeboxService.Tunes
+                .Where(t => t.Instruments.Any(i => i.Contains(instrument, StringComparison.CurrentCultureIgnoreCase)))
+                .ToList();
+        }
+        else if (!string.IsNullOrWhiteSpace(Playlist))
         {
             Tunes = JukeboxService.Tunes
                 .Where(t => t.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
-                    || (t.Name?.StartsWith(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
-                .ToList();
-        }
-        else if (!string.IsNullOrWhiteSpace(Tag))
-        {
-            Playlist = $"tag:{Tag}";
-            Tunes = JukeboxService.Tunes
-                .Where(t => t.Tags.Any(tag => tag.Contains(Tag, StringComparison.CurrentCultureIgnoreCase)))
-                .ToList();
-        }
-        else if (!string.IsNullOrWhiteSpace(Instrument))
-        {
-            Playlist = $"instrument:{Instrument}";
-            Tunes = JukeboxService.Tunes
-                .Where(t => t.Instruments.Any(i => i.Contains(Instrument, StringComparison.CurrentCultureIgnoreCase)))
+                    || t.Instruments.Any(i => i.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+                    || (t.Name?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false))
                 .ToList();
         }
         else
@@ -140,13 +139,13 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
 
     protected void SelectTag(string tag)
     {
-        Tag = tag;
+        Playlist = $"tag:{tag}";
         DoSearch();
     }
 
     protected void SelectInstrument(string instrument)
     {
-        Instrument = instrument;
+        Playlist = $"instrument:{instrument}";
         DoSearch();
     }
 
@@ -187,6 +186,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
                     await OnUpdate.InvokeAsync(false);
                 }
             }
+            await InvokeAsync(StateHasChanged);
         }
     }
 

@@ -380,9 +380,11 @@ public partial class JukeboxService : IDisposable
     {
         if (!string.IsNullOrWhiteSpace(playlistName))
         {
-            var playlist = Playlists.FirstOrDefault(p => p.Name.Equals(playlistName, StringComparison.CurrentCultureIgnoreCase));
+            var todelete = Playlists
+                .Where(p => p.Name.Equals(playlistName, StringComparison.CurrentCultureIgnoreCase))
+                .ToArray();
 
-            if (playlist != null)
+            foreach (var playlist in todelete)
             {
                 Playlists.Remove(playlist);
                 repo.Delete<Playlist>(playlist.ID);
