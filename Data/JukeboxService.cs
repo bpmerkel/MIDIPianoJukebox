@@ -178,13 +178,17 @@ public partial class JukeboxService : IDisposable
         return Task.Run(async () =>
         {
             logger($"Updating database {cxstring} from MIDI files in {Settings.MIDIPath}");
-            var files = new DirectoryInfo(Settings.MIDIPath)
-                .EnumerateFiles("*.mid", SearchOption.AllDirectories)
+
+            var files = Directory.EnumerateFiles(Settings.MIDIPath, "*.mid", SearchOption.AllDirectories)
+                .AsParallel()
+                .WithDegreeOfParallelism(Environment.ProcessorCount)
+                .WithExecutionMode(ParallelExecutionMode.ForceParallelism)
+                .Select(f => new FileInfo(f))
                 .Where(fi => fi.Length > 100)
                 .OrderBy(fi => fi.Name)
-                .ToList();
+                .ToArray();
 
-            var total = files.Count;
+            var total = files.Length;
             logger($"Processing {total:#,##0} MIDI files");
 
             // use the top-level folder name as the Genre
@@ -200,9 +204,14 @@ public partial class JukeboxService : IDisposable
 
             var toRemove = repo.Database.GetCollection<Tune>().FindAll()
                 .Where(t => !File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
-                .ToList();
-            logger($"Removing {toRemove.Count:#,##0} missing tunes");
-            toRemove.ForEach(t => repo.Delete<Tune>(t.ID));
+                .ToArray();
+            logger($"Removing {toRemove.Length:#,##0} missing tunes");
+
+            foreach (var tune in toRemove)
+            {
+                logger($"Removing {tune.Filepath}");
+                repo.Delete<Tune>(tune.ID);
+            }
 
             files
                 .AsParallel()
@@ -213,6 +222,7 @@ public partial class JukeboxService : IDisposable
                         var subpath = file.FullName[(Settings.MIDIPath.Length + 1)..];
 
                         Interlocked.Increment(ref counter);
+
                         if (counter % 1000 == 0 || counter == total)
                         {
                             var rate = counter / (float)sw.ElapsedMilliseconds; // = items per ms
