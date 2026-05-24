@@ -3,7 +3,7 @@
     MultiSelection="true" SelectOnRowClick="true" SelectedItems="@SelectedTunes" SelectedItemsChanged="SavePlaylist"
     Groupable="true" GroupExpanded="true"
     SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@QuickFilter"
-    Virtualize="true" FixedHeader="true" Height="calc(100vh - 80px)" Class="mx-4">
+    Virtualize="true" FixedHeader="true" Height="calc(100vh - 250px)" Class="mx-4">
     <ToolBarContent>
         <MudText Typo="Typo.h6">@($"{SelectedTunes?.Count:#,##0}") Tunes</MudText>
         <MudTextField @bind-Value="@Playlist" Placeholder="Search"

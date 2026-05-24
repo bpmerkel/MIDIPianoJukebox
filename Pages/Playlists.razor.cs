@@ -233,8 +233,8 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         }
 
         var browserHeight = browserViewportEventArgs.BrowserWindowSize.Height;
-        browserHeight -= 64 + 72 + 41 + 50; // subtract heights of app bar, height of player, grid header, height of pager
-        var rows = browserHeight / 41; // Assuming each row is approximately 41px tall
+        browserHeight -= 48 + 32 + 68 + 150; // subtract heights of app bar, height of player, grid header, height of pager
+        var rows = browserHeight / 90; // Assuming each row is approximately 80px tall
         dg.SetRowsPerPageAsync(rows);
         return InvokeAsync(StateHasChanged);
     }
