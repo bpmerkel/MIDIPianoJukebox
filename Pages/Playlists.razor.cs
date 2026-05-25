@@ -40,20 +40,9 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     private List<Tune> Tunes { get; set; }
 
-    /// <summary>
-    /// Represents the selected Tunes.
-    /// </summary>
-    private HashSet<Tune> SelectedTunes { get; set; } = [];
-
     protected override Task OnParametersSetAsync()
     {
         Tunes = JukeboxService.Tunes;
-
-        var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
-        SelectedTunes = playlist != null
-            ? Tunes.Intersect(playlist.Tunes, new Tune()).ToHashSet()   // use intersect logic so SelectedTunes are same objects
-            : Tunes.ToHashSet();
-
         return base.OnParametersSetAsync();
     }
 
@@ -82,24 +71,30 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// <returns>True if the tune matches the filter, false otherwise.</returns>
     protected bool QuickFilter(Tune tune)
     {
+        var show = false;
+
         if (string.IsNullOrWhiteSpace(Playlist))
         {
-            return true;
+            show = true;
         }
         else if (Playlist?.StartsWith("tag:", StringComparison.CurrentCultureIgnoreCase) ?? false)
         {
             var tag = Playlist[4..];
-            return tune.Tags.Any(t => t.Contains(tag, StringComparison.CurrentCultureIgnoreCase));
+            show = tune.Tags.Any(t => t.Contains(tag, StringComparison.CurrentCultureIgnoreCase));
         }
         else if (Playlist?.StartsWith("instrument:", StringComparison.CurrentCultureIgnoreCase) ?? false)
         {
             var instrument = Playlist[11..];
-            return tune.Instruments.Any(i => i.Contains(instrument, StringComparison.CurrentCultureIgnoreCase));
+            show = tune.Instruments.Any(i => i?.Contains(instrument, StringComparison.CurrentCultureIgnoreCase) ?? false);
+        }
+        else
+        {
+            show = tune.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
+                || tune.Instruments.Any(i => i?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false)
+                || (tune.Name?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false);
         }
 
-        return tune.Tags.Any(tag => tag.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase))
-            || (tune.Instruments?.Any(i => i?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false) ?? false)
-            || (tune.Name?.Contains(Playlist, StringComparison.CurrentCultureIgnoreCase) ?? false);
+        return show;
     }
 
     /// <summary>
@@ -176,16 +171,9 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(Playlist))
         {
             var playlist = JukeboxService.Playlists.FirstOrDefault(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase));
-            if (playlist != null)
-            {
-                var hasdiffs = Tunes.Except(SelectedTunes).Any();
-                if (hasdiffs)
-                {
-                    playlist.Tunes = SelectedTunes.ToList();
-                    JukeboxService.SavePlaylist(playlist);
-                    await OnUpdate.InvokeAsync(true);
-                }
-            }
+            playlist ??= new Playlist { Name = Playlist, ID = new ObjectId() };
+            playlist.Tunes = dg.FilteredItems.ToList();
+            JukeboxService.SavePlaylist(playlist);
             await InvokeAsync(StateHasChanged);
         }
     }
