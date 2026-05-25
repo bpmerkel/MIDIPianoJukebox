@@ -383,8 +383,7 @@ public partial class JukeboxService : IDisposable
                 playlists.Insert(playlist);
             }
 
-            var committed = database.Commit();
-            Debug.WriteLine($"Database commited: {committed}");
+            database.Commit();
 
             Playlists.Add(playlist);
         }
