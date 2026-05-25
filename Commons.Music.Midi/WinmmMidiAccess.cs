@@ -1,4 +1,4 @@
-﻿namespace Commons.Music.Midi.WinMM;
+﻿namespace Commons.Music.Midi;
 
 public class WinMMMidiAccess : IMidiAccess
 {

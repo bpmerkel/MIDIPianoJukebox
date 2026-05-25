@@ -12,5 +12,4 @@ global using MudBlazor;
 global using MudBlazor.Services;
 global using LiteDB;
 global using Commons.Music.Midi;
-global using Commons.Music.Midi.WinMM;
 global using MIDIPianoJukebox.Data;

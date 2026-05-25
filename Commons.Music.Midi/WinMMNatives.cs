@@ -1,4 +1,4 @@
-﻿namespace Commons.Music.Midi.WinMM;
+﻿namespace Commons.Music.Midi;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 public struct MidiOutCaps
