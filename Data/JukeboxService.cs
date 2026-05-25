@@ -10,12 +10,12 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Connection string for the database.
     /// </summary>
-    private const string cxstring = "Filename=jukebox.db;Mode=shared;Upgrade=true";
+    private const string cxstring = "Filename=jukebox.db;Connection=shared;Upgrade=true";
 
     /// <summary>
     /// Repository for accessing the database.
     /// </summary>
-    private readonly LiteRepository repo = new(cxstring);
+    private readonly LiteDatabase database = new(cxstring);
 
     /// <summary>
     /// Object for thread synchronization.
@@ -129,9 +129,9 @@ public partial class JukeboxService : IDisposable
                     return;
                 }
 
-                var tunes = repo.Database.GetCollection<Tune>();
-                var playlists = repo.Database.GetCollection<Playlist>();
-                var settings = repo.Database.GetCollection<Settings>();
+                var tunes = database.GetCollection<Tune>();
+                var playlists = database.GetCollection<Playlist>();
+                var settings = database.GetCollection<Settings>();
 
                 tunes.EnsureIndex(x => x.ID, true);
                 tunes.EnsureIndex(x => x.Filepath, true);
@@ -202,7 +202,7 @@ public partial class JukeboxService : IDisposable
             var counter = 0;
             var sw = Stopwatch.StartNew();
 
-            var toRemove = repo.Database.GetCollection<Tune>().FindAll()
+            var toRemove = database.GetCollection<Tune>().FindAll()
                 .Where(t => !File.Exists(Path.Combine(Settings.MIDIPath, t.Filepath)))
                 .ToArray();
             logger($"Removing {toRemove.Length:#,##0} missing tunes");
@@ -210,7 +210,7 @@ public partial class JukeboxService : IDisposable
             foreach (var tune in toRemove)
             {
                 logger($"Removing {tune.Filepath}");
-                repo.Delete<Tune>(tune.ID);
+                database.GetCollection<Tune>().Delete(tune.ID);
             }
 
             files
@@ -283,9 +283,10 @@ public partial class JukeboxService : IDisposable
 
                         lock (syncroot)
                         {
+                            var tunes = database.GetCollection<Tune>();
                             // add/update the tune
-                            var tune = repo.Query<Tune>()
-                                .Where(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
+                            var tune = tunes
+                                .Find(t => t.Filepath.Equals(subpath, StringComparison.CurrentCultureIgnoreCase))
                                 .FirstOrDefault();
 
                             if (tune != null)
@@ -300,11 +301,11 @@ public partial class JukeboxService : IDisposable
                                 tune.Instruments = instrumentNames;
                                 // tune.Rating // leave alone
                                 // tune.AddedUtc // leave alone
-                                repo.Update(tune);
+                                tunes.Update(tune);
                             }
                             else
                             {
-                                repo.Insert(new Tune
+                                tunes.Insert(new Tune
                                 {
                                     Name = name,
                                     Filepath = subpath,
@@ -325,10 +326,12 @@ public partial class JukeboxService : IDisposable
                         logger($"Error on {file.FullName}: {ex.Message}");
                         return;
                     }
+
+                    database.Commit();
                 });
 
             //logger("Shrinking Database...");
-            //repo.Database.Rebuild();
+            //database.Database.Rebuild();
             //logger("Database refresh complete");
 
             Loaded = false;
@@ -340,13 +343,23 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Saves the jukebox settings to the database.
     /// </summary>
-    public void SaveSettings() => repo.Upsert(Settings);
+    public void SaveSettings()
+    {
+        var settings = database.GetCollection<Settings>();
+        settings.Upsert(Settings);
+        database.Commit();
+    }
 
     /// <summary>
     /// Saves a tune to the database.
     /// </summary>
     /// <param name="tune">The tune to save.</param>
-    public void SaveTune(Tune tune) => repo.Update(tune);
+    public void SaveTune(Tune tune)
+    {
+        var tunes = database.GetCollection<Tune>();
+        tunes.Update(tune);
+        database.Commit();
+    }
 
     /// <summary>
     /// Saves a playlist to the database.
@@ -355,25 +368,30 @@ public partial class JukeboxService : IDisposable
     public void SavePlaylist(Playlist playlist)
     {
         ArgumentNullException.ThrowIfNull(playlist);
+        var playlists = database.GetCollection<Playlist>();
 
         if (playlist.Tunes.Count > 0)
         {
-            var already = repo.Query<Playlist>().Where(p => p.ID == playlist.ID);
+            var already = playlists.FindById(playlist.ID);
 
             if (already != null)
             {
-                repo.Update(playlist);
+                playlists.Update(playlist);
             }
             else
             {
-                repo.Insert(playlist);
+                playlists.Insert(playlist);
             }
+
+            var committed = database.Commit();
+            Debug.WriteLine($"Database commited: {committed}");
 
             Playlists.Add(playlist);
         }
         else
         {
-            repo.Delete<Playlist>(playlist.ID);
+            playlists.Delete(playlist.ID);
+            database.Commit();
         }
     }
 
@@ -385,6 +403,7 @@ public partial class JukeboxService : IDisposable
     {
         if (!string.IsNullOrWhiteSpace(playlistName))
         {
+            var playlists = database.GetCollection<Playlist>();
             var todelete = Playlists
                 .Where(p => p.Name.Equals(playlistName, StringComparison.CurrentCultureIgnoreCase))
                 .ToArray();
@@ -392,7 +411,7 @@ public partial class JukeboxService : IDisposable
             foreach (var playlist in todelete)
             {
                 Playlists.Remove(playlist);
-                repo.Delete<Playlist>(playlist.ID);
+                playlists.Delete(playlist.ID);
             }
         }
     }
@@ -530,11 +549,6 @@ public partial class JukeboxService : IDisposable
         if (CurrentPlayer == null)
         {
             var music = GetMusic();
-
-            foreach (var instrument in music.GetInstruments())
-            {
-                Console.WriteLine(instrument);
-            }
 
             if (music != null)
             {
@@ -775,7 +789,7 @@ public partial class JukeboxService : IDisposable
             StopPlayer();
         }
 
-        repo.Dispose();
+        database.Dispose();
         GC.SuppressFinalize(this);
     }
 
