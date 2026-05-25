@@ -26,7 +26,7 @@ public class MidiMusic
         .SelectMany(t => t.Messages)
         .Select(m => m.Event)
         .Where(e => (e.EventType & 0xF0) == MidiEvent.Program)
-        .Select(e => $"{MidiInstruments.Instrument(e.Msb)} {MidiInstruments.Family(e.Msb)}")
+        .Select(e => MidiInstruments.Instrument(e.Msb)) // MidiInstruments.Family(e.Msb)
         .Distinct()
         .OrderBy(i => i)
         .ToArray();

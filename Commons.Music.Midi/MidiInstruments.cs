@@ -8,7 +8,7 @@ public class MidiInstruments
         In each family, there are 8 specific instruments.
         PC#	    Family
     */
-    public static readonly (int min, int max, string family)[] GeneralMidiFamilies = """
+    public static readonly (byte min, byte max, string family)[] GeneralMidiFamilies = """
         1-8 Piano
         9-16 Chromatic Percussion
         17-24 Organ
@@ -29,13 +29,16 @@ public class MidiInstruments
         .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(line =>
         {
-            var parts = line.Split("\t ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var parts = line.Split("\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var range = parts[0].Split('-');
-            return (min: int.Parse(range[0])-1, max: int.Parse(range[1])-1, name: parts[1]);
+            return (min: (byte)(byte.Parse(range[0])-1), max: (byte)(byte.Parse(range[1])-1), family: parts[1]);
         })
         .ToArray();
 
-    public static string Family(int id) => GeneralMidiFamilies.FirstOrDefault(f => f.min <= id && id <= f.max).family;
+    public static string Family(byte id) => GeneralMidiFamilies
+        .Where(f => f.min <= id && id <= f.max)
+        .Select(f => f.family)
+        .First();
 
     /*
         General MIDI Instrument Patch Map
@@ -44,7 +47,7 @@ public class MidiInstruments
         intended only as guides.
         PC#	Instrument
     */
-    public static readonly Dictionary<int, string> GeneralMidiInstruments = """
+    public static readonly Dictionary<byte, string> GeneralMidiInstruments = """
         1.	Acoustic Grand Piano
         2.	Bright Acoustic Piano
         3.	Electric Grand Piano
@@ -177,12 +180,12 @@ public class MidiInstruments
         .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(line =>
         {
-            var parts = line.Split("\t ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return (id: int.Parse(parts[0].TrimEnd('.'))-1, name: parts[1]);
+            var parts = line.Split("\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return (id: (byte)(byte.Parse(parts[0].TrimEnd('.'))-1), name: parts[1]);
         })
         .ToDictionary(x => x.id, x => x.name);
 
-    public static string Instrument(int id) => GeneralMidiInstruments.TryGetValue(id, out var name) ? name : null;
+    public static string Instrument(byte id) => GeneralMidiInstruments.TryGetValue(id, out var name) ? name : null;
 
     /*
         General MIDI Percussion Key Map
@@ -193,7 +196,7 @@ public class MidiInstruments
         only these sounds are supported by General MIDI.
         Key#	Note	Drum Sound
     */
-    public static readonly Dictionary<int, (string note, string instrument)> GeneralMidiPercussion = """
+    public static readonly Dictionary<byte, (string note, string instrument)> GeneralMidiPercussion = """
         35	B1	Acoustic Bass Drum
         36	C2	Bass Drum 1
         37	C#2	Side Stick
@@ -246,9 +249,9 @@ public class MidiInstruments
         .Select(line =>
         {
             var parts = line.Split("\t ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return (id: int.Parse(parts[0]) - 1, note: parts[1], instrument: parts[2]);
+            return (id: (byte)(byte.Parse(parts[0]) - 1), note: parts[1], instrument: parts[2]);
         })
         .ToDictionary(x => x.id, x => (x.note, x.instrument));
 
-    public static (string note, string instrument) Percussion(int id) => GeneralMidiPercussion.TryGetValue(id, out var value) ? value : (null, null);
+    public static (string note, string instrument) Percussion(byte id) => GeneralMidiPercussion.TryGetValue(id, out var value) ? value : (null, null);
 }

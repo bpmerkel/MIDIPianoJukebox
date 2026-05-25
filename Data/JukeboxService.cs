@@ -531,6 +531,11 @@ public partial class JukeboxService : IDisposable
         {
             var music = GetMusic();
 
+            foreach (var instrument in music.GetInstruments())
+            {
+                Console.WriteLine(instrument);
+            }
+
             if (music != null)
             {
                 outputDevice = GetDevice();
