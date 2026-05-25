@@ -42,7 +42,7 @@ public class SmfTrackMerger
         }
 
         // Usual Sort() over simple list of MIDI events does not work as expected.
-        // For example, it does not always preserve event 
+        // For example, it does not always preserve event
         // orders on the same channels when the delta time
         // of event B after event A is 0. It could be sorted
         // either as A->B or B->A.

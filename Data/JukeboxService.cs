@@ -246,7 +246,10 @@ public partial class JukeboxService : IDisposable
                             return;
                         }
 
-                        var name = Path.GetFileNameWithoutExtension(file.Name).Replace('_', ' ');
+                        var name = Path.GetFileNameWithoutExtension(file.Name).Trim();
+                        name = NoPunctuation().Replace(name, " ").Trim();   // replace punctuation
+                        name = NoMultipleSpaces().Replace(name, " ").Trim();   // remove multiple spaces
+
                         var tracksCount = music.Tracks.Count;
                         var messages = music.Tracks.SelectMany(track => track.Messages).ToArray();
                         var messagesCount = messages.Length;
@@ -276,6 +279,7 @@ public partial class JukeboxService : IDisposable
                             .OrderBy(m => m)
                             .Distinct()
                             .ToArray();
+                        var instrumentNames = music.GetInstruments().Concat(instruments).Distinct().ToArray();
 
                         lock (syncroot)
                         {
@@ -293,7 +297,7 @@ public partial class JukeboxService : IDisposable
                                 tune.Events = eventsCount;
                                 tune.Durationms = duration;
                                 tune.Tags = tags;
-                                tune.Instruments = instruments;
+                                tune.Instruments = instrumentNames;
                                 // tune.Rating // leave alone
                                 // tune.AddedUtc // leave alone
                                 repo.Update(tune);
@@ -309,7 +313,7 @@ public partial class JukeboxService : IDisposable
                                     Events = eventsCount,
                                     Durationms = duration,
                                     Tags = tags,
-                                    Instruments = instruments,
+                                    Instruments = instrumentNames,
                                     Rating = 0f,
                                     AddedUtc = DateTime.UtcNow
                                 });
@@ -797,4 +801,10 @@ public partial class JukeboxService : IDisposable
     /// <returns>The regex for matching certain words and phrases that should be ignored.</returns>
     [GeneratedRegex(@"^(untitled|generated|played|written|words|\(brt\)|Copyright|http|www\.|e?mail|piano|acoustic|pedal|edition|sequenced|music\s+by|for\s+general|by\s+|words\s+|from\s+|arranged\s+|sung\s+|composed|dedicated|kmidi|melody|seq|track|this\s+and|1800S|midi\s+out|\S+\.com|\S+\.org|All Rights Reserved|with|when|just|Bdca426|dont|know|some|what|like|this|tk10|youre|Bwv001|Unnamed|comments|have|will|thing|come|v0100|midisource)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex Ignore();
+
+    [GeneratedRegex(@"[_.\-,`']+")]
+    private static partial Regex NoPunctuation();
+
+    [GeneratedRegex(@"\s\s+")]
+    private static partial Regex NoMultipleSpaces();
 }

@@ -22,6 +22,15 @@ public class MidiMusic
 
     public IList<MidiTrack> Tracks => tracks;
 
+    public string[] GetInstruments() => Tracks
+        .SelectMany(t => t.Messages)
+        .Select(m => m.Event)
+        .Where(e => (e.EventType & 0xF0) == MidiEvent.Program)
+        .Select(e => $"{MidiInstruments.Instrument(e.Msb)} {MidiInstruments.Family(e.Msb)}")
+        .Distinct()
+        .OrderBy(i => i)
+        .ToArray();
+
     public IEnumerable<MidiMessage> GetMetaEventsOfType(byte metaType) => Format != 0
         ? SmfTrackMerger.Merge(this).GetMetaEventsOfType(metaType)
         : GetMetaEventsOfType(tracks[0].Messages, metaType);
@@ -53,7 +62,7 @@ public class MidiMusic
 
     public static int GetTotalPlayTimeMilliseconds(IList<MidiMessage> messages, int deltaTimeSpec) => GetPlayTimeMillisecondsAtTick(messages, messages.Sum(m => m.DeltaTime), deltaTimeSpec);
 
-    public static int GetPlayTimeMillisecondsAtTick(IList<MidiMessage> messages, int ticks, int deltaTimeSpec)
+    private static int GetPlayTimeMillisecondsAtTick(IList<MidiMessage> messages, int ticks, int deltaTimeSpec)
     {
         if (deltaTimeSpec < 0)
         {
@@ -68,14 +77,14 @@ public class MidiMusic
         {
             var deltaTime = t + m.DeltaTime < ticks ? m.DeltaTime : ticks - t;
             v += (double)tempo / 1000 * deltaTime / deltaTimeSpec;
-           
+
             if (deltaTime != m.DeltaTime)
             {
                 break;
             }
 
             t += m.DeltaTime;
-            
+
             if (m.Event.EventType == MidiEvent.Meta && m.Event.Msb == MidiMetaType.Tempo)
             {
                 tempo = MidiMetaType.GetTempo(m.Event.ExtraData, m.Event.ExtraDataOffset);

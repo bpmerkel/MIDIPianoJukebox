@@ -14,7 +14,7 @@
                 }
             }
         }
-        
+
         <MudStack Row="true" Spacing="4">
             @foreach (var p in JukeboxService.Playlists.DistinctBy(pp => pp.Name).OrderBy(pp => pp.Name))
             {

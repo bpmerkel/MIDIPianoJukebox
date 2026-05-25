@@ -55,7 +55,6 @@ public class SmfReader
 
     private MidiTrack ReadTrack()
     {
-        var tr = new MidiTrack();
         if (ReadByte() != 'M'
             || ReadByte() != 'T'
             || ReadByte() != 'r'
@@ -67,6 +66,8 @@ public class SmfReader
         var trackSize = ReadInt32();
         current_track_size = 0;
         var total = 0;
+        var tr = new MidiTrack();
+
         while (current_track_size < trackSize)
         {
             var delta = ReadVariableLength();
@@ -104,6 +105,7 @@ public class SmfReader
                 }
 
                 return new MidiMessage(deltaTime, new MidiEvent(running_status, metaType, 0, args, 0, args.Length));
+
             default:
                 int value = running_status;
                 value += ReadByte() << 8;
@@ -146,12 +148,12 @@ public class SmfReader
     private int ReadVariableLength()
     {
         var val = 0;
-        
+
         for (var i = 0; i < 4; i++)
         {
             var b = ReadByte();
             val = (val << 7) + b;
-            
+
             if (b < 0x80)
             {
                 return val;
