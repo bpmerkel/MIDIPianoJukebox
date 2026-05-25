@@ -547,6 +547,9 @@ public partial class JukeboxService : IDisposable
 
         if (CurrentPlayer == null)
         {
+            Tune.Plays += 1;
+            SaveTune(Tune);
+
             var music = GetMusic();
 
             if (music != null)
@@ -573,9 +576,6 @@ public partial class JukeboxService : IDisposable
     /// </summary>
     private void Player_Finished()
     {
-        // will need this to signal next tune in the queue
-        Tune.Plays += 1;
-
         if (Tune.Rating < 1f)    // if we got here and a rating hasn't been assigned, then default to 3
         {
             Tune.Rating = 3f;

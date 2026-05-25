@@ -112,10 +112,11 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// <summary>
     /// Handles the RatingChanged event.
     /// </summary>
-    protected async Task DoRatingChanged(Tune t, float rating, bool next = false)
+    protected async Task DoRatingChanged(Tune tune, float rating, bool next = false)
     {
-        t.Rating = rating;
-        JukeboxService.SaveTune(t);
+        tune.Rating = rating;
+        JukeboxService.SaveTune(tune);
+
         if (next)
         {
             await DoPlayNext(null);
