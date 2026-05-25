@@ -15,6 +15,8 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     [Inject] IDialogService DialogService { get; set; }
 
+    [Inject] ISnackbar Snackbar { get; set; }
+
     /// <summary>
     /// Gets or sets the BrowserViewportService used to observe viewport changes.
     /// </summary>
@@ -152,12 +154,14 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         // if a new playlist is requested, add it
         if (!string.IsNullOrWhiteSpace(Playlist) && !JukeboxService.Playlists.Any(p => p.Name.Equals(Playlist, StringComparison.CurrentCultureIgnoreCase)))
         {
-            JukeboxService.SavePlaylist(new Playlist
+            var playlist = new Playlist
             {
                 Name = ToTitleCase(Playlist),
                 ID = ObjectId.NewObjectId(),
                 Tunes = Tunes
-            });
+            };
+            JukeboxService.SavePlaylist(playlist);
+            Snackbar.Add($"Playlist '{playlist.Name}' created.", Severity.Success);
             await OnUpdate.InvokeAsync(true);
             await InvokeAsync(StateHasChanged);
         }
@@ -174,6 +178,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
             playlist ??= new Playlist { Name = Playlist, ID = new ObjectId() };
             playlist.Tunes = dg.FilteredItems.ToList();
             JukeboxService.SavePlaylist(playlist);
+            Snackbar.Add($"Playlist '{playlist.Name}' saved.", Severity.Success);
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -181,6 +186,7 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
     private async Task DoDeletePlaylist(MouseEventArgs args)
     {
         JukeboxService.ClearPlaylist(Playlist);
+        Snackbar.Add($"Playlist '{Playlist}' deleted.", Severity.Success);
         await OnUpdate.InvokeAsync(true);
         await InvokeAsync(StateHasChanged);
     }
