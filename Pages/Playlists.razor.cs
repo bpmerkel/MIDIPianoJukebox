@@ -134,6 +134,14 @@ public partial class Playlists : IBrowserViewportObserver, IAsyncDisposable
         StateHasChanged();
     }
 
+    private void FilterChanged(IReadOnlyCollection<IFilterDefinition<Tune>> filters)
+    {
+        if (filters.Count != 0)
+        {
+            //SelectedTunes = dg.FilteredItems.ToHashSet();
+        }
+    }
+
     protected void SelectTag(string tag)
     {
         Playlist = $"tag:{tag}";
