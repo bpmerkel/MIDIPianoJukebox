@@ -1,9 +1,10 @@
-﻿namespace Commons.Music.Midi;
+﻿namespace MIDIPianoJukebox.Midi;
 
 public class MidiInstruments
 {
     /*
         General MIDI Instrument Families
+        See https://midimusic.github.io/tech/midispec.html#BM3_
         The General MIDI instrument sounds are grouped by families.
         In each family, there are 8 specific instruments.
         PC#	    Family

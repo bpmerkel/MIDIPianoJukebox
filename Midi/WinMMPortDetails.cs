@@ -1,4 +1,4 @@
-﻿namespace Commons.Music.Midi;
+﻿namespace MIDIPianoJukebox.Midi;
 
 public class WinMMPortDetails(uint deviceId, string name, int version) : IMidiPortDetails
 {

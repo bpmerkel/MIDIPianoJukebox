@@ -11,5 +11,5 @@ global using Blazored.LocalStorage;
 global using MudBlazor;
 global using MudBlazor.Services;
 global using LiteDB;
-global using Commons.Music.Midi;
+global using MIDIPianoJukebox.Midi;
 global using MIDIPianoJukebox.Data;

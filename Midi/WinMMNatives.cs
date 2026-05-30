@@ -1,4 +1,4 @@
-﻿namespace Commons.Music.Midi;
+﻿namespace MIDIPianoJukebox.Midi;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 public struct MidiOutCaps

@@ -1,4 +1,4 @@
-namespace Commons.Music.Midi;
+namespace MIDIPianoJukebox.Midi;
 
 /// <summary>
 /// Used by MidiPlayer to manage time progress.

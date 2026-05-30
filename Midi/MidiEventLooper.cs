@@ -1,4 +1,4 @@
-namespace Commons.Music.Midi;
+namespace MIDIPianoJukebox.Midi;
 
 // Event loop implementation.
 public class MidiEventLooper : IDisposable

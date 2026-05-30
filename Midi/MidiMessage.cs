@@ -1,4 +1,4 @@
-namespace Commons.Music.Midi;
+namespace MIDIPianoJukebox.Midi;
 
 public readonly struct MidiMessage(int deltaTime, MidiEvent evt)
 {
