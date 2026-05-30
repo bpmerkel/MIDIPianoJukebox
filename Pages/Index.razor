@@ -60,8 +60,6 @@ else
                     <Columns>
                         <HierarchyColumn T="Tune" />
                         <PropertyColumn Property="@(tune => tune.Name)" />
-                        <PropertyColumn Property="@(tune => tune.Plays)" CellStyle="text-align: center" />
-                        <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Rating)">
                             <CellTemplate>
                                 <MudStack Row>
@@ -69,6 +67,8 @@ else
                                 </MudStack>
                             </CellTemplate>
                         </PropertyColumn>
+                        <PropertyColumn Property="@(tune => tune.Plays)" CellStyle="text-align: center" />
+                        <PropertyColumn Property="@(tune => tune.Duration)" Format="m\:ss" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Instruments.Length)" Format="#,##0" Filterable="false" Title="Instruments" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Tracks)" Format="#,##0" Filterable="false" Title="Tracks" CellStyle="text-align: center" />
                         <PropertyColumn Property="@(tune => tune.Messages)" Format="#,##0" Filterable="false" Title="Messages" CellStyle="text-align: center" />
