@@ -250,11 +250,10 @@ public partial class JukeboxService : IDisposable
                         name = NoPunctuation().Replace(name, " ").Trim();   // replace punctuation
                         name = NoMultipleSpaces().Replace(name, " ").Trim();   // remove multiple spaces
 
-                        var tracksCount = music.Tracks.Count;
-                        var messages = music.Tracks.SelectMany(track => track.Messages).ToArray();
-                        var messagesCount = messages.Length;
-                        var events = messages.Select(msg => msg.Event).ToArray();
-                        var eventsCount = events.Length;
+                        var events = music.Tracks
+                            .SelectMany(track => track.Messages)
+                            .Select(msg => msg.Event)
+                            .ToArray();
                         var tags = events
                             .Where(e => e.EventType == MidiEvent.Meta && (e.Msb == MidiMetaType.TrackName || e.Msb == MidiMetaType.Text))
                             .Select(e => new string(Encoding.ASCII.GetChars(e.ExtraData)).Trim())
@@ -293,14 +292,9 @@ public partial class JukeboxService : IDisposable
                             {
                                 tune.Name = name;
                                 tune.Filepath = subpath;
-                                tune.Tracks = tracksCount;
-                                tune.Messages = messagesCount;
-                                tune.Events = eventsCount;
                                 tune.Durationms = duration;
                                 tune.Tags = tags;
                                 tune.Instruments = instrumentNames;
-                                // tune.Rating // leave alone
-                                // tune.AddedUtc // leave alone
                                 tunes.Update(tune);
                             }
                             else
@@ -309,9 +303,6 @@ public partial class JukeboxService : IDisposable
                                 {
                                     Name = name,
                                     Filepath = subpath,
-                                    Tracks = tracksCount,
-                                    Messages = messagesCount,
-                                    Events = eventsCount,
                                     Durationms = duration,
                                     Tags = tags,
                                     Instruments = instrumentNames,

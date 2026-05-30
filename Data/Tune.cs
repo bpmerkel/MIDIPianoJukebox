@@ -51,21 +51,6 @@ public class Tune : IEqualityComparer<Tune>
     public int Durationms { get; set; }
 
     /// <summary>
-    /// Gets or sets the number of tracks in the tune.
-    /// </summary>
-    public int Tracks { get; set; }
-
-    /// <summary>
-    /// Gets or sets the number of messages in the tune.
-    /// </summary>
-    public int Messages { get; set; }
-
-    /// <summary>
-    /// Gets or sets the number of events in the tune.
-    /// </summary>
-    public int Events { get; set; }
-
-    /// <summary>
     /// Gets the duration of the tune as a <see cref="TimeSpan"/>.
     /// </summary>
     [BsonIgnore] public TimeSpan Duration => TimeSpan.FromMilliseconds(Durationms);

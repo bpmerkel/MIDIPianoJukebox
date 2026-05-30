@@ -28,8 +28,6 @@
                         <td><MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(Tune.Rating))" MaxValue="5" SelectedValueChanged="DoRatingChanged" /></td>
                     }
                     <td>@Tune.Instruments.Count()</td>
-                    <td>@Tune.Tracks</td>
-                    <td>@($"{Tune.Messages:#,##0}")</td>
                 </tr>
                 <tr>
                     <td colspan="6">
