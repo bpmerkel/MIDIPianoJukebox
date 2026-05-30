@@ -45,3 +45,48 @@ You can remotely operate the Jukebox from most browsers from your phone, iPad, e
 The app will track your song ratings, allow skipping forward, shufffle, play/pause, etc.
 
 I've created playlists for "Ragtime", "Christmas", "Beatles", and plenty of other genres and keywords--even MIDI files recorded by certain artists that sounds great on the piano.
+
+# How to run the ASP.NET Core as a Windows Service
+
+Running an ASP.NET Core app as a Windows Service allows it to start automatically on boot and run in the background without IIS. This is ideal for APIs, background jobs, or intranet apps.
+
+## 1. Create the Windows Service
+
+From an elevated PowerShell:
+
+``` powershell
+New-Service -Name "MIDI Piano Jukebox" `
+-BinaryPathName "C:\path\to\MIDIPianoJukebox.exe --contentRoot C:\path\to" `
+-Description "MIDI Piano Jukebox Service" `
+-DisplayName "MIDI Piano Jukebox Service" `
+-StartupType Automatic
+```
+
+Grant the service account Log on as a service rights if needed.
+
+## 4. Start and Verify
+
+Start the service:
+
+``` powershell
+Start-Service -Name "MIDI Piano Jukebox"
+```
+Check status:
+
+``` powershell
+Get-Service -Name "MIDI Piano Jukebox"
+```
+
+View logs in Event Viewer → Windows Logs → Application.
+
+## Tips
+
+Avoid using `Directory.GetCurrentDirectory();` use `AppContext.BaseDirectory` for file paths.
+
+Configure URLs via `ASPNETCORE_URLS` environment variable.
+
+For HTTPS, use a valid certificate (dev certs aren’t supported for services).
+
+Always deploy from `dotnet publish` output, not `dotnet build`.
+
+This approach ensures your ASP.NET Core app runs reliably as a background Windows Service with proper startup, logging, and deployment practices.

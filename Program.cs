@@ -1,5 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddWindowsService(options => options.ServiceName = "MIDI Piano Jukebox");
+
 // Add Razor Pages services to the DI container
 builder.Services.AddRazorPages();
 
