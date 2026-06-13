@@ -1,15 +1,18 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Simple implementation of seek processor that filters out note events until the target tick is reached.
+/// </summary>
 public class SimpleSeekProcessor(int ticks) : ISeekProcessor
 {
-    private readonly int seek_to = ticks;
-    private int current;
+    private readonly int _seekTo = ticks;
+    private int _current;
 
     public SeekFilterResult FilterMessage(MidiMessage message)
     {
-        current += message.DeltaTime;
+        _current += message.DeltaTime;
 
-        if (current >= seek_to)
+        if (_current >= _seekTo)
         {
             return SeekFilterResult.PassAndTerminate;
         }

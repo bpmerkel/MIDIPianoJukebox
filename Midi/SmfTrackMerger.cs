@@ -1,15 +1,18 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Merges multiple MIDI tracks into a single track for playback.
+/// </summary>
 public class SmfTrackMerger
 {
     public static MidiMusic Merge(MidiMusic source) => new SmfTrackMerger(source).GetMergedMessages();
 
     private SmfTrackMerger(MidiMusic source)
     {
-        this.source = source;
+        _source = source;
     }
 
-    private readonly MidiMusic source;
+    private readonly MidiMusic _source;
 
     // FIXME: it should rather be implemented to iterate all
     // tracks with index to messages, pick the track which contains
@@ -18,14 +21,14 @@ public class SmfTrackMerger
     // over thousands of events.
     private MidiMusic GetMergedMessages()
     {
-        if (source.Format == 0)
+        if (_source.Format == 0)
         {
-            return source;
+            return _source;
         }
 
         List<MidiMessage> l = [];
 
-        foreach (var track in source.Tracks)
+        foreach (var track in _source.Tracks)
         {
             var delta = 0;
 
@@ -38,7 +41,7 @@ public class SmfTrackMerger
 
         if (l.Count == 0)
         {
-            return new MidiMusic() { DeltaTimeSpec = source.DeltaTimeSpec }; // empty (why did you need to sort your song file?)
+            return new MidiMusic() { DeltaTimeSpec = _source.DeltaTimeSpec }; // empty (why did you need to sort your song file?)
         }
 
         // Usual Sort() over simple list of MIDI events does not work as expected.
@@ -99,7 +102,7 @@ public class SmfTrackMerger
 
         var m = new MidiMusic
         {
-            DeltaTimeSpec = source.DeltaTimeSpec,
+            DeltaTimeSpec = _source.DeltaTimeSpec,
             Format = 0
         };
         m.Tracks.Add(new MidiTrack(l));

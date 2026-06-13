@@ -2,29 +2,34 @@ namespace MIDIPianoJukebox.Midi;
 
 public delegate void MidiEventAction(MidiEvent m);
 
-// Provides asynchronous player control.
-public class MidiPlayer : IDisposable
+/// <summary>
+/// Provides asynchronous MIDI player control.
+/// </summary>
+public class MidiPlayer : IAsyncDisposable
 {
+    private const int MidiChannelCount = 16;
+    private const int DefaultBufferSize = 0x100;
+
     public MidiPlayer(MidiMusic music, IMidiOutput output)
     {
         ArgumentNullException.ThrowIfNull(music);
         ArgumentNullException.ThrowIfNull(output);
 
         var timeManager = new SimpleAdjustingMidiPlayerTimeManager();
-        this.music = music;
-        this.output = output;
+        _music = music;
+        _output = output;
 
-        messages = SmfTrackMerger.Merge(music).Tracks[0].Messages;
-        player = new MidiEventLooper(messages, timeManager, music.DeltaTimeSpec);
-        player.Starting += () =>
+        _messages = SmfTrackMerger.Merge(music).Tracks[0].Messages;
+        _player = new MidiEventLooper(_messages, timeManager, music.DeltaTimeSpec);
+        _player.Starting += () =>
         {
             // all control reset on all channels.
-            for (var i = 0; i < 16; i++)
+            for (var i = 0; i < MidiChannelCount; i++)
             {
-                buffer[0] = (byte)(i + 0xB0);
-                buffer[1] = 0x79;
-                buffer[2] = 0;
-                output.Send(buffer, 0, 3, 0);
+                _buffer[0] = (byte)(i + 0xB0);
+                _buffer[1] = 0x79;
+                _buffer[2] = 0;
+                _output.Send(_buffer, 0, 3, 0);
             }
         };
 
@@ -34,14 +39,14 @@ public class MidiPlayer : IDisposable
             {
                 case MidiEvent.SysEx1:
                 case MidiEvent.SysEx2:
-                    if (buffer.Length <= m.ExtraDataLength)
+                    if (_buffer.Length <= m.ExtraDataLength)
                     {
-                        buffer = new byte[buffer.Length * 2];
+                        _buffer = new byte[_buffer.Length * 2];
                     }
 
-                    buffer[0] = m.StatusByte;
-                    Array.Copy(m.ExtraData, m.ExtraDataOffset, buffer, 1, m.ExtraDataLength);
-                    output.Send(buffer, 0, m.ExtraDataLength + 1, 0);
+                    _buffer[0] = m.StatusByte;
+                    Array.Copy(m.ExtraData!, m.ExtraDataOffset, _buffer, 1, m.ExtraDataLength);
+                    _output.Send(_buffer, 0, m.ExtraDataLength + 1, 0);
                     break;
                 case MidiEvent.Meta:
                     // do nothing.
@@ -50,86 +55,86 @@ public class MidiPlayer : IDisposable
                 case MidiEvent.NoteOff:
                 default:
                     var size = MidiEvent.FixedDataSize(m.StatusByte);
-                    buffer[0] = m.StatusByte;
-                    buffer[1] = m.Msb;
-                    buffer[2] = m.Lsb;
-                    output.Send(buffer, 0, size + 1, 0);
+                    _buffer[0] = m.StatusByte;
+                    _buffer[1] = m.Msb;
+                    _buffer[2] = m.Lsb;
+                    _output.Send(_buffer, 0, size + 1, 0);
                     break;
             }
         };
     }
 
-    private readonly MidiEventLooper player;
-    private Task sync_player_task;
-    private readonly IMidiOutput output;
-    private readonly IList<MidiMessage> messages;
-    private readonly MidiMusic music;
-    private byte[] buffer = new byte[0x100];
+    private readonly MidiEventLooper _player;
+    private Task _syncPlayerTask;
+    private readonly IMidiOutput _output;
+    private readonly IList<MidiMessage> _messages;
+    private readonly MidiMusic _music;
+    private byte[] _buffer = new byte[DefaultBufferSize];
 
     public event Action PlaybackCompletedToEnd
     {
-        add { player.PlaybackCompletedToEnd += value; }
-        remove { player.PlaybackCompletedToEnd -= value; }
+        add { _player.PlaybackCompletedToEnd += value; }
+        remove { _player.PlaybackCompletedToEnd -= value; }
     }
 
-    public PlayerState State => player.state;
+    public PlayerState State => _player._state;
 
-    public int Tempo => player.current_tempo;
+    public int Tempo => _player._currentTempo;
     // You can break the data at your own risk but I take performance precedence.
-    public int PlayDeltaTime => player.play_delta_time;
-    public TimeSpan PositionInTime => TimeSpan.FromMilliseconds(music.GetTimePositionInMillisecondsForTick(PlayDeltaTime));
-    public int GetTotalPlayTimeMilliseconds() => MidiMusic.GetTotalPlayTimeMilliseconds(messages, music.DeltaTimeSpec);
+    public int PlayDeltaTime => _player._playDeltaTime;
+    public TimeSpan PositionInTime => TimeSpan.FromMilliseconds(_music.GetTimePositionInMillisecondsForTick(PlayDeltaTime));
+    public int GetTotalPlayTimeMilliseconds() => MidiMusic.GetTotalPlayTimeMilliseconds(_messages, _music.DeltaTimeSpec);
 
     public event MidiEventAction EventReceived
     {
-        add { player.EventReceived += value; }
-        remove { player.EventReceived -= value; }
+        add { _player.EventReceived += value; }
+        remove { _player.EventReceived -= value; }
     }
 
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
-        player.Stop();
-        output.Dispose();
+        await _player.DisposeAsync();
+        _output.Dispose();
         GC.SuppressFinalize(this);
     }
 
-    public void Play()
+    public async Task PlayAsync()
     {
         switch (State)
         {
             case PlayerState.Playing:
                 return; // do nothing
             case PlayerState.Paused:
-                player.Play();
+                await _player.PlayAsync();
                 return;
             case PlayerState.Stopped:
-                if (sync_player_task == null || sync_player_task.Status != TaskStatus.Running)
+                if (_syncPlayerTask == null || _syncPlayerTask.Status != TaskStatus.Running)
                 {
-                    sync_player_task = Task.Run(() => { player.PlayerLoop(); });
+                    _syncPlayerTask = Task.Run(async () => { await _player.PlayerLoopAsync(); });
                 }
-                player.Play();
+                await _player.PlayAsync();
                 return;
         }
     }
 
-    public void Pause()
+    public async Task PauseAsync()
     {
         if (State == PlayerState.Playing)
         {
-            player.Pause();
+            await _player.PauseAsync();
         }
     }
 
-    public void Stop()
+    public async Task StopAsync()
     {
         switch (State)
         {
             case PlayerState.Paused:
             case PlayerState.Playing:
-                player.Stop();
+                await _player.StopAsync();
                 break;
         }
     }
 
-    public void Seek(int ticks) => player.Seek(null, ticks);
+    public async Task SeekAsync(int ticks) => await _player.SeekAsync(null, ticks);
 }

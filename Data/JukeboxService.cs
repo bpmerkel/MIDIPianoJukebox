@@ -5,7 +5,7 @@ namespace MIDIPianoJukebox.Data;
 /// It provides methods for loading the jukebox, adding logs, refreshing the database, saving settings, tunes, and playlists,
 /// managing the play queue, controlling the player, and getting device information.
 /// </summary>
-public partial class JukeboxService : IDisposable
+public partial class JukeboxService : IAsyncDisposable
 {
     /// <summary>
     /// Connection string for the database.
@@ -101,7 +101,7 @@ public partial class JukeboxService : IDisposable
         private set
         {
             _progress = value;
-            ProgressChanged(value);
+            ProgressChanged?.Invoke(value);
         }
     }
 
@@ -311,14 +311,13 @@ public partial class JukeboxService : IDisposable
                                 });
                             }
                         }
+                        database.Commit();
                     }
                     catch (Exception ex)
                     {
                         logger($"Error on {file.FullName}: {ex.Message}");
                         return;
                     }
-
-                    database.Commit();
                 });
 
             //logger("Shrinking Database...");
@@ -376,7 +375,10 @@ public partial class JukeboxService : IDisposable
 
             database.Commit();
 
-            Playlists.Add(playlist);
+            if (!Playlists.Any(p => p.ID == playlist.ID))
+            {
+                Playlists.Add(playlist);
+            }
         }
         else
         {
@@ -403,6 +405,8 @@ public partial class JukeboxService : IDisposable
                 Playlists.Remove(playlist);
                 playlists.Delete(playlist.ID);
             }
+
+            database.Commit();
         }
     }
 
@@ -410,20 +414,20 @@ public partial class JukeboxService : IDisposable
     /// Get the next Tune from the queue and play it.
     /// </summary>
     /// <param name="shuffle">Whether to shuffle the queue.</param>
-    public void PlayNext(bool shuffle)
+    public async Task PlayNextAsync(bool shuffle)
     {
         // interrupt any current playing Tune
-        StopPlayer();
+        await StopPlayerAsync();
 
         if (Queue.Count != 0)
         {
             // get the next queue item
-            var idx = shuffle ? new Random().Next(0, Queue.Count - 1) : 0;
+            var idx = shuffle ? new Random().Next(Queue.Count) : 0;
             Tune = Queue[idx];
             Queue.RemoveAt(idx);
 
             // play 'next'
-            PlayPlayer();
+            await PlayPlayerAsync();
         }
         else
         {
@@ -435,17 +439,17 @@ public partial class JukeboxService : IDisposable
     /// Set and play a specific Tune from the queue.
     /// </summary>
     /// <param name="tune">The tune to play.</param>
-    public void Play(Tune tune)
+    public async Task PlayAsync(Tune tune)
     {
         var found = Queue.FirstOrDefault(t => t.ID == tune.ID);
 
         if (found != null)
         {
             // interrupt any current playing Tune
-            StopPlayer();
+            await StopPlayerAsync();
             Queue.Remove(found);
             Tune = tune;
-            PlayPlayer();
+            await PlayPlayerAsync();
         }
     }
 
@@ -528,12 +532,12 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Plays the current tune in the jukebox.
     /// </summary>
-    private void PlayPlayer()
+    private async Task PlayPlayerAsync()
     {
         // spin wait until stopped, if pending a stop
         while (isStopping)
         {
-            Thread.Sleep(100);
+            await Task.Delay(100);
         }
 
         if (CurrentPlayer == null)
@@ -545,14 +549,14 @@ public partial class JukeboxService : IDisposable
 
             if (music != null)
             {
-                outputDevice = GetDevice();
+                outputDevice = await GetDeviceAsync();
                 CurrentPlayer = new MidiPlayer(music, outputDevice);
                 TotalTime = CurrentPlayer.GetTotalPlayTimeMilliseconds();
                 CurrentTime = TimeSpan.FromMilliseconds(0);
                 RemainingTime = TimeSpan.FromMilliseconds(TotalTime);
                 CurrentPlayer.PlaybackCompletedToEnd += Player_Finished;
                 CurrentPlayer.EventReceived += Player_EventReceived;
-                CurrentPlayer.Play();
+                await CurrentPlayer.PlayAsync();
             }
             else
             {
@@ -619,7 +623,7 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Stops the current tune in the jukebox.
     /// </summary>
-    public void StopPlayer()
+    public async Task StopPlayerAsync()
     {
         if (CurrentPlayer == null)
         {
@@ -631,13 +635,13 @@ public partial class JukeboxService : IDisposable
             // spin wait until stopped
             while (isStopping)
             {
-                Thread.Sleep(100);
+                await Task.Delay(100);
             }
         }
         else
         {
             isStopping = true;
-            CurrentPlayer.Stop();
+            await CurrentPlayer.StopAsync();
 
             // spin wait until stopped
             while (CurrentPlayer.State != PlayerState.Stopped)
@@ -650,7 +654,7 @@ public partial class JukeboxService : IDisposable
             Progress = 0;
             CurrentTime = TimeSpan.FromMilliseconds(0);
             RemainingTime = TimeSpan.FromMilliseconds(TotalTime);
-            CurrentPlayer.Dispose();
+            await CurrentPlayer.DisposeAsync();
             outputDevice.Dispose();
             outputDevice = null;
             CurrentPlayer = null;
@@ -661,7 +665,7 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Pauses the current tune in the jukebox.
     /// </summary>
-    public void PausePlayer()
+    public async Task PausePlayerAsync()
     {
         if (CurrentPlayer == null)
         {
@@ -672,7 +676,7 @@ public partial class JukeboxService : IDisposable
         {
             try
             {
-                CurrentPlayer.Pause();
+                await CurrentPlayer.PauseAsync();
             }
             catch (Win32Exception) { }
         }
@@ -681,7 +685,7 @@ public partial class JukeboxService : IDisposable
     /// <summary>
     /// Resumes the current tune in the jukebox.
     /// </summary>
-    public void ResumePlayer()
+    public async Task ResumePlayerAsync()
     {
         if (CurrentPlayer == null)
         {
@@ -690,7 +694,7 @@ public partial class JukeboxService : IDisposable
 
         if (CurrentPlayer.State != PlayerState.Playing)
         {
-            CurrentPlayer.Play();
+            await CurrentPlayer.PlayAsync();
         }
     }
 
@@ -698,29 +702,29 @@ public partial class JukeboxService : IDisposable
     /// Skips a certain number of ticks in the current tune.
     /// </summary>
     /// <param name="ticks">The number of ticks to skip.</param>
-    public void SkipPlayer(int ticks)
+    public async Task SkipPlayerAsync(int ticks)
     {
         if (CurrentPlayer == null)
         {
             return;
         }
 
-        SkipPlayerTo(CurrentPlayer.PlayDeltaTime + ticks);
+        await SkipPlayerToAsync(CurrentPlayer.PlayDeltaTime + ticks);
     }
 
     /// <summary>
     /// Skips to a certain tick in the current tune.
     /// </summary>
     /// <param name="ticks">The tick to skip to.</param>
-    public void SkipPlayerTo(int ticks)
+    public async Task SkipPlayerToAsync(int ticks)
     {
         if (CurrentPlayer == null || ticks < 0)
         {
             return;
         }
 
-        CurrentPlayer.Seek(ticks);
-        ResumePlayer();
+        await CurrentPlayer.SeekAsync(ticks);
+        await ResumePlayerAsync();
     }
 
     /// <summary>
@@ -762,21 +766,21 @@ public partial class JukeboxService : IDisposable
     /// Gets a MIDI output device.
     /// </summary>
     /// <returns>A MIDI output device.</returns>
-    public IMidiOutput GetDevice()
+    public async Task<IMidiOutput> GetDeviceAsync()
     {
         var wmm = new WinMMMidiAccess();
-        var dev = wmm.OpenOutputAsync(Settings.OutputDevice ?? "0").Result;
+        var dev = await wmm.OpenOutputAsync(Settings.OutputDevice ?? "0");
         return dev;
     }
 
     /// <summary>
     /// Disposes of the jukebox service.
     /// </summary>
-    public void Dispose()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
         if (CurrentPlayer != null)
         {
-            StopPlayer();
+            await StopPlayerAsync();
         }
 
         database.Dispose();

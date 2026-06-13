@@ -1,5 +1,8 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Defines MIDI meta event types and utility methods.
+/// </summary>
 public static class MidiMetaType
 {
     public const byte SequenceNumber = 0x00;
@@ -19,6 +22,12 @@ public static class MidiMetaType
     public const byte SequencerSpecific = 0x7F;
     public const int DefaultTempo = 500000;
 
+    /// <summary>
+    /// Extracts the tempo value from MIDI meta event data.
+    /// </summary>
+    /// <param name="data">The byte array containing tempo data.</param>
+    /// <param name="offset">The offset in the array where tempo data starts.</param>
+    /// <returns>The tempo value in microseconds per quarter note.</returns>
     public static int GetTempo(byte[] data, int offset)
     {
         ArgumentNullException.ThrowIfNull(data);

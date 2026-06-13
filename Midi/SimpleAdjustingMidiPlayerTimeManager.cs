@@ -1,9 +1,12 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Simple time manager that adjusts MIDI playback timing to maintain synchronization.
+/// </summary>
 public class SimpleAdjustingMidiPlayerTimeManager : IMidiPlayerTimeManager
 {
-    private DateTime last_started = default;
-    private long nominal_total_mills = 0L;
+    private DateTime _lastStarted = default;
+    private long _nominalTotalMilliseconds = 0L;
 
     public void WaitBy(int addedMilliseconds)
     {
@@ -11,14 +14,14 @@ public class SimpleAdjustingMidiPlayerTimeManager : IMidiPlayerTimeManager
         {
             long delta = addedMilliseconds;
 
-            if (last_started != default)
+            if (_lastStarted != default)
             {
-                var actualTotalMills = (long)(DateTime.Now - last_started).TotalMilliseconds;
-                delta -= actualTotalMills - nominal_total_mills;
+                var actualTotalMilliseconds = (long)(DateTime.Now - _lastStarted).TotalMilliseconds;
+                delta -= actualTotalMilliseconds - _nominalTotalMilliseconds;
             }
             else
             {
-                last_started = DateTime.Now;
+                _lastStarted = DateTime.Now;
             }
 
             if (delta > 0)
@@ -27,7 +30,7 @@ public class SimpleAdjustingMidiPlayerTimeManager : IMidiPlayerTimeManager
                 t.Wait();
             }
 
-            nominal_total_mills += addedMilliseconds;
+            _nominalTotalMilliseconds += addedMilliseconds;
         }
     }
 }

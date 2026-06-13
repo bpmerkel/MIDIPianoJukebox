@@ -1,5 +1,8 @@
 ﻿namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Windows Multimedia MIDI output capabilities structure.
+/// </summary>
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 public struct MidiOutCaps
 {
@@ -15,6 +18,9 @@ public struct MidiOutCaps
     public int Support;
 }
 
+/// <summary>
+/// Windows Multimedia MIDI header structure for system exclusive messages.
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct MidiHdr
 {
@@ -30,6 +36,9 @@ public struct MidiHdr
     private readonly int[] reservedArray;
 }
 
+/// <summary>
+/// Flags for opening MIDI output devices.
+/// </summary>
 [Flags]
 public enum MidiOutOpenFlags
 {
@@ -42,6 +51,9 @@ public enum MidiOutOpenFlags
 
 public delegate void MidiOutProc(IntPtr midiOut, uint msg, IntPtr instance, IntPtr param1, IntPtr param2);
 
+/// <summary>
+/// P/Invoke declarations for Windows Multimedia MIDI APIs.
+/// </summary>
 public static partial class WinMMNatives
 {
     public const string LibraryName = "winmm";

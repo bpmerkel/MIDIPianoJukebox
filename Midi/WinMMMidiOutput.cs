@@ -1,15 +1,19 @@
 ﻿namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Windows Multimedia MIDI output implementation.
+/// </summary>
 public class WinMMMidiOutput : IMidiOutput
 {
+    private readonly IntPtr _handle;
+
     public WinMMMidiOutput(IMidiPortDetails details)
     {
         Details = details;
-        _ = WinMMNatives.midiOutOpen(out handle, uint.Parse(Details.Id), null, IntPtr.Zero, MidiOutOpenFlags.Null);
+        _ = WinMMNatives.midiOutOpen(out _handle, uint.Parse(Details.Id), null, IntPtr.Zero, MidiOutOpenFlags.Null);
         Connection = MidiPortConnectionState.Open;
     }
 
-    private readonly IntPtr handle;
     public IMidiPortDetails Details { get; private set; }
     public MidiPortConnectionState Connection { get; private set; }
 
@@ -18,14 +22,19 @@ public class WinMMMidiOutput : IMidiOutput
         return Task.Run(() =>
         {
             Connection = MidiPortConnectionState.Pending;
-            _ = WinMMNatives.midiOutClose(handle);
+            _ = WinMMNatives.midiOutClose(_handle);
             Connection = MidiPortConnectionState.Closed;
         });
     }
 
     public void Dispose()
     {
-        CloseAsync().Wait();
+        if (Connection != MidiPortConnectionState.Closed)
+        {
+            Connection = MidiPortConnectionState.Pending;
+            _ = WinMMNatives.midiOutClose(_handle);
+            Connection = MidiPortConnectionState.Closed;
+        }
     }
 
     public void Send(byte[] mevent, int offset, int length, long timestamp)
@@ -34,7 +43,7 @@ public class WinMMMidiOutput : IMidiOutput
         {
             if (evt.StatusByte < 0xF0 || evt.ExtraData == null)
             {
-                DieOnError(WinMMNatives.midiOutShortMsg(handle, (uint)(evt.StatusByte + (evt.Msb << 8) + (evt.Lsb << 16))));
+                DieOnError(WinMMNatives.midiOutShortMsg(_handle, (uint)(evt.StatusByte + (evt.Msb << 8) + (evt.Lsb << 16))));
             }
             else
             {
@@ -53,17 +62,17 @@ public class WinMMMidiOutput : IMidiOutput
                     ptr = Marshal.AllocHGlobal(hdrSize);
                     Marshal.StructureToPtr(header, ptr, false);
 
-                    DieOnError(WinMMNatives.midiOutPrepareHeader(handle, ptr, hdrSize));
+                    DieOnError(WinMMNatives.midiOutPrepareHeader(_handle, ptr, hdrSize));
                     prepared = true;
 
-                    DieOnError(WinMMNatives.midiOutLongMsg(handle, ptr, hdrSize));
+                    DieOnError(WinMMNatives.midiOutLongMsg(_handle, ptr, hdrSize));
                 }
                 finally
                 {
                     // reclaim ownership and free
                     if (prepared)
                     {
-                        DieOnError(WinMMNatives.midiOutUnprepareHeader(handle, ptr, hdrSize));
+                        DieOnError(WinMMNatives.midiOutUnprepareHeader(_handle, ptr, hdrSize));
                     }
 
                     if (header.Data != IntPtr.Zero)

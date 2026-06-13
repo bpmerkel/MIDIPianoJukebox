@@ -1,7 +1,15 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Represents a MIDI music file with tracks and timing information.
+/// </summary>
 public class MidiMusic
 {
+    /// <summary>
+    /// Reads a MIDI file from a stream.
+    /// </summary>
+    /// <param name="stream">The stream containing MIDI file data.</param>
+    /// <returns>A MidiMusic instance representing the parsed MIDI file.</returns>
     public static MidiMusic Read(Stream stream)
     {
         var r = new SmfReader();
@@ -16,10 +24,19 @@ public class MidiMusic
         Format = 1;
     }
 
+    /// <summary>
+    /// Gets or sets the delta time specification (ticks per quarter note or SMPTE format).
+    /// </summary>
     public short DeltaTimeSpec { get; set; }
 
+    /// <summary>
+    /// Gets or sets the MIDI file format (0, 1, or 2).
+    /// </summary>
     public byte Format { get; set; }
 
+    /// <summary>
+    /// Gets the list of MIDI tracks in this music.
+    /// </summary>
     public IList<MidiTrack> Tracks => tracks;
 
     public string[] GetInstruments() => Tracks

@@ -1,5 +1,8 @@
 ﻿namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Provides General MIDI instrument and percussion mappings.
+/// </summary>
 public class MidiInstruments
 {
     /*
@@ -27,10 +30,10 @@ public class MidiInstruments
         113-120 Percussive
         121-128 Sound Effects
         """
-        .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(line =>
         {
-            var parts = line.Split("\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var parts = line.Split([' ', '\t'], 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var range = parts[0].Split('-');
             return (min: (byte)(byte.Parse(range[0])-1), max: (byte)(byte.Parse(range[1])-1), family: parts[1]);
         })
@@ -39,7 +42,7 @@ public class MidiInstruments
     public static string Family(byte id) => GeneralMidiFamilies
         .Where(f => f.min <= id && id <= f.max)
         .Select(f => f.family)
-        .First();
+        .FirstOrDefault();
 
     /*
         General MIDI Instrument Patch Map
@@ -178,10 +181,10 @@ public class MidiInstruments
         127.	Applause
         128.	Gunshot
         """
-        .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(line =>
         {
-            var parts = line.Split("\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var parts = line.Split([' ', '\t'], 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             return (id: (byte)(byte.Parse(parts[0].TrimEnd('.'))-1), name: parts[1]);
         })
         .ToDictionary(x => x.id, x => x.name);
@@ -246,11 +249,11 @@ public class MidiInstruments
         80	G#5	Mute Triangle
         81	A5	Open Triangle
         """
-        .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(line =>
         {
-            var parts = line.Split("\t ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return (id: (byte)(byte.Parse(parts[0]) - 1), note: parts[1], instrument: parts[2]);
+            var parts = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return (id: (byte)(byte.Parse(parts[0]) - 1), note: parts[1], instrument: string.Join(" ", parts.Skip(2)));
         })
         .ToDictionary(x => x.id, x => (x.note, x.instrument));
 

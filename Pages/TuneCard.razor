@@ -8,25 +8,23 @@
         <MudSimpleTable Dense="true" Hover="false" Bordered="false" Striped="false">
             <thead>
                 <tr>
-                    <th>Plays</th>
-                    <th>Duration</th>
                     @if (OnRatingChanged.HasDelegate)
                     {
                         <th>Rating</th>
                     }
+                    <th>Plays</th>
+                    <th>Duration</th>
                     <th>Instruments</th>
-                    <th>Tracks</th>
-                    <th>Messages</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>@Tune.Plays</td>
-                    <td>@Tune.Duration.ToString("m\\:ss")</td>
                     @if (OnRatingChanged.HasDelegate)
                     {
                         <td><MudRating Size="@Size.Small" SelectedValue="@(Convert.ToInt32(Tune.Rating))" MaxValue="5" SelectedValueChanged="DoRatingChanged" /></td>
                     }
+                    <td>@Tune.Plays</td>
+                    <td>@Tune.Duration.ToString("m\\:ss")</td>
                     <td>@Tune.Instruments.Count()</td>
                 </tr>
                 <tr>

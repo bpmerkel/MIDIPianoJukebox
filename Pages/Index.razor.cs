@@ -129,7 +129,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoPlay(MouseEventArgs e)
     {
-        JukeboxService.ResumePlayer();
+        await JukeboxService.ResumePlayerAsync();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -148,7 +148,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
                 JukeboxService.Queue.AddRange(dg.FilteredItems);
             }
         }
-        JukeboxService.PlayNext(Shuffle);
+        await JukeboxService.PlayNextAsync(Shuffle);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -157,7 +157,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoPause(MouseEventArgs e)
     {
-        JukeboxService.PausePlayer();
+        await JukeboxService.PausePlayerAsync();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -166,7 +166,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoSkip(MouseEventArgs e)
     {
-        JukeboxService.SkipPlayer(10_000);
+        await JukeboxService.SkipPlayerAsync(10_000);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -175,7 +175,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoReplay(MouseEventArgs e)
     {
-        JukeboxService.SkipPlayerTo(0);
+        await JukeboxService.SkipPlayerToAsync(0);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -184,7 +184,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
     /// </summary>
     protected async Task DoStop(MouseEventArgs e)
     {
-        JukeboxService.StopPlayer();
+        await JukeboxService.StopPlayerAsync();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -194,7 +194,7 @@ public partial class Index: IBrowserViewportObserver, IAsyncDisposable
         {
             return;
         }
-        JukeboxService.Play(tune);
+        await JukeboxService.PlayAsync(tune);
         await InvokeAsync(StateHasChanged);
     }
 

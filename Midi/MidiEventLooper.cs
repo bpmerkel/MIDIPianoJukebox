@@ -1,8 +1,12 @@
 namespace MIDIPianoJukebox.Midi;
 
-// Event loop implementation.
-public class MidiEventLooper : IDisposable
+/// <summary>
+/// Event loop implementation for MIDI playback.
+/// </summary>
+public class MidiEventLooper : IAsyncDisposable
 {
+    private const int MidiChannelCount = 16;
+
     public MidiEventLooper(IList<MidiMessage> messages, IMidiPlayerTimeManager timeManager, int deltaTimeSpec)
     {
         ArgumentNullException.ThrowIfNull(messages);
@@ -12,94 +16,96 @@ public class MidiEventLooper : IDisposable
             throw new NotSupportedException("SMPTe-based delta time is not implemented in this player.");
         }
 
-        delta_time_spec = deltaTimeSpec;
-        time_manager = timeManager;
-        this.messages = messages;
-        state = PlayerState.Stopped;
+        _deltaTimeSpec = deltaTimeSpec;
+        _timeManager = timeManager;
+        _messages = messages;
+        _state = PlayerState.Stopped;
     }
 
     public MidiEventAction EventReceived;
     public event Action Starting;
     public event Action Finished;
     public event Action PlaybackCompletedToEnd;
-    private readonly IMidiPlayerTimeManager time_manager;
-    private readonly IList<MidiMessage> messages;
-    private readonly int delta_time_spec;
-    private readonly ManualResetEvent pause_handle = new(false);
-    private bool do_pause, do_stop;
-    internal double tempo_ratio = 1.0;
-    internal PlayerState state;
-    private int event_idx = 0;
-    internal int current_tempo = MidiMetaType.DefaultTempo;
-    internal byte[] current_time_signature = new byte[4];
-    internal int play_delta_time;
+    private readonly IMidiPlayerTimeManager _timeManager;
+    private readonly IList<MidiMessage> _messages;
+    private readonly int _deltaTimeSpec;
+    private readonly ManualResetEvent _pauseHandle = new(false);
+    private bool _doPause, _doStop;
+    internal double _tempoRatio = 1.0;
+    internal PlayerState _state;
+    private int _eventIdx = 0;
+    internal int _currentTempo = MidiMetaType.DefaultTempo;
+    internal byte[] _currentTimeSignature = new byte[4];
+    internal int _playDeltaTime;
 
-    public virtual void Dispose()
+    public virtual async ValueTask DisposeAsync()
     {
-        if (state != PlayerState.Stopped)
+        if (_state != PlayerState.Stopped)
         {
-            Stop();
+            await StopAsync();
         }
 
-        Mute();
+        await MuteAsync();
+        _pauseHandle?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
-    public void Play()
+    public async Task PlayAsync()
     {
-        pause_handle.Set();
-        state = PlayerState.Playing;
+        _pauseHandle.Set();
+        _state = PlayerState.Playing;
     }
 
-    private void Mute()
+    private async Task MuteAsync()
     {
-        for (var i = 0; i < 16; i++)
+        for (var i = 0; i < MidiChannelCount; i++)
         {
             OnEvent(new MidiEvent((byte)(i + 0xB0), 0x78, 0, null, 0, 0));
         }
     }
 
-    public void Pause()
+    public async Task PauseAsync()
     {
-        do_pause = true;
-        Mute();
+        _doPause = true;
+        await MuteAsync();
     }
 
-    public void PlayerLoop()
+    public async Task PlayerLoopAsync()
     {
         Starting?.Invoke();
-        event_idx = 0;
-        play_delta_time = 0;
+        _eventIdx = 0;
+        _playDeltaTime = 0;
 
         while (true)
         {
-            pause_handle.WaitOne();
+            _pauseHandle.WaitOne();
 
-            if (do_stop)
+            if (_doStop)
             {
                 break;
             }
 
-            if (do_pause)
+            if (_doPause)
             {
-                pause_handle.Reset();
-                do_pause = false;
-                state = PlayerState.Paused;
+                _pauseHandle.Reset();
+                _doPause = false;
+                _state = PlayerState.Paused;
                 continue;
             }
 
-            if (event_idx == messages.Count)
+            if (_eventIdx == _messages.Count)
             {
                 break;
             }
 
-            ProcessMessage(messages[event_idx++]);
+            ProcessMessage(_messages[_eventIdx++]);
         }
 
-        do_stop = false;
-        Mute();
-        state = PlayerState.Stopped;
+        _doStop = false;
+        await MuteAsync();
+        _state = PlayerState.Stopped;
 
-        if (event_idx == messages.Count)
+        if (_eventIdx == _messages.Count)
         {
             PlaybackCompletedToEnd?.Invoke();
         }
@@ -107,20 +113,20 @@ public class MidiEventLooper : IDisposable
         Finished?.Invoke();
     }
 
-    private int GetContextDeltaTimeInMilliseconds(int deltaTime) => (int)(current_tempo / 1000 * deltaTime / delta_time_spec / tempo_ratio);
+    private int GetContextDeltaTimeInMilliseconds(int deltaTime) => (int)(_currentTempo / 1000 * deltaTime / _deltaTimeSpec / _tempoRatio);
 
     private void ProcessMessage(MidiMessage m)
     {
-        if (seek_processor != null)
+        if (_seekProcessor != null)
         {
-            var result = seek_processor.FilterMessage(m);
+            var result = _seekProcessor.FilterMessage(m);
             switch (result)
             {
                 case SeekFilterResult.PassAndTerminate:
-                    seek_processor = null;
+                    _seekProcessor = null;
                     break;
                 case SeekFilterResult.BlockAndTerminate:
-                    seek_processor = null;
+                    _seekProcessor = null;
                     return; // ignore this event
                 case SeekFilterResult.Block:
                     return; // ignore this event
@@ -129,19 +135,19 @@ public class MidiEventLooper : IDisposable
         else if (m.DeltaTime != 0)
         {
             var ms = GetContextDeltaTimeInMilliseconds(m.DeltaTime);
-            time_manager.WaitBy(ms);
-            play_delta_time += m.DeltaTime;
+            _timeManager.WaitBy(ms);
+            _playDeltaTime += m.DeltaTime;
         }
 
         if (m.Event.StatusByte == 0xFF)
         {
             if (m.Event.Msb == MidiMetaType.Tempo)
             {
-                current_tempo = MidiMetaType.GetTempo(m.Event.ExtraData, m.Event.ExtraDataOffset);
+                _currentTempo = MidiMetaType.GetTempo(m.Event.ExtraData, m.Event.ExtraDataOffset);
             }
             else if (m.Event.Msb == MidiMetaType.TimeSignature && m.Event.ExtraDataLength == 4)
             {
-                Array.Copy(m.Event.ExtraData, current_time_signature, 4);
+                Array.Copy(m.Event.ExtraData, _currentTimeSignature, 4);
             }
         }
 
@@ -150,24 +156,26 @@ public class MidiEventLooper : IDisposable
 
     private void OnEvent(MidiEvent m) => EventReceived?.Invoke(m);
 
-    public void Stop()
+    public async Task StopAsync()
     {
-        if (state != PlayerState.Stopped)
+        if (_state != PlayerState.Stopped)
         {
-            do_stop = true;
-            pause_handle?.Set();
+            _doStop = true;
+            _pauseHandle?.Set();
             Finished?.Invoke();
         }
     }
 
-    private ISeekProcessor seek_processor;
+    private ISeekProcessor _seekProcessor;
 
-    // not sure about the interface, so make it non-public yet.
-    internal void Seek(ISeekProcessor seekProcessor, int ticks)
+    /// <summary>
+    /// Seeks to a specific position in ticks.
+    /// </summary>
+    internal async Task SeekAsync(ISeekProcessor seekProcessor, int ticks)
     {
-        seek_processor = seekProcessor ?? new SimpleSeekProcessor(ticks);
-        event_idx = 0;
-        play_delta_time = ticks;
-        Mute();
+        _seekProcessor = seekProcessor ?? new SimpleSeekProcessor(ticks);
+        _eventIdx = 0;
+        _playDeltaTime = ticks;
+        await MuteAsync();
     }
 }

@@ -1,5 +1,8 @@
 ﻿namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Windows Multimedia API implementation of MIDI access.
+/// </summary>
 public class WinMMMidiAccess : IMidiAccess
 {
     public IEnumerable<IMidiPortDetails> Outputs

@@ -1,24 +1,29 @@
 namespace MIDIPianoJukebox.Midi;
 
+/// <summary>
+/// Standard MIDI File (SMF) reader for parsing MIDI files.
+/// </summary>
 public class SmfReader
 {
-    private Stream stream;
-    private MidiMusic data;
-    public MidiMusic Music => data;
+    private const int MaxVariableLengthBytes = 4;
+
+    private Stream _stream;
+    private MidiMusic _data;
+    public MidiMusic Music => _data!;
 
     public void Read(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        this.stream = stream;
-        data = new MidiMusic();
+        _stream = stream;
+        _data = new MidiMusic();
         try
         {
             DoParse();
         }
         finally
         {
-            this.stream = null;
+            _stream = null;
         }
     }
 
@@ -37,14 +42,14 @@ public class SmfReader
             throw ParseError("Unexpected data size (should be 6)");
         }
 
-        data.Format = (byte)ReadInt16();
+        _data!.Format = (byte)ReadInt16();
         var tracks = ReadInt16();
-        data.DeltaTimeSpec = ReadInt16();
+        _data.DeltaTimeSpec = ReadInt16();
         try
         {
             for (var i = 0; i < tracks; i++)
             {
-                data.Tracks.Add(ReadTrack());
+                _data.Tracks.Add(ReadTrack());
             }
         }
         catch (FormatException ex)
@@ -64,18 +69,18 @@ public class SmfReader
         }
 
         var trackSize = ReadInt32();
-        current_track_size = 0;
+        _currentTrackSize = 0;
         var total = 0;
         var tr = new MidiTrack();
 
-        while (current_track_size < trackSize)
+        while (_currentTrackSize < trackSize)
         {
             var delta = ReadVariableLength();
             tr.Messages.Add(ReadMessage(delta));
             total += delta;
         }
 
-        if (current_track_size != trackSize)
+        if (_currentTrackSize != trackSize)
         {
             throw ParseError("Size information mismatch");
         }
@@ -83,19 +88,19 @@ public class SmfReader
         return tr;
     }
 
-    private int current_track_size;
-    private byte running_status;
+    private int _currentTrackSize;
+    private byte _runningStatus;
 
     private MidiMessage ReadMessage(int deltaTime)
     {
         var b = PeekByte();
-        running_status = b < 0x80 ? running_status : ReadByte();
-        switch (running_status)
+        _runningStatus = b < 0x80 ? _runningStatus : ReadByte();
+        switch (_runningStatus)
         {
             case MidiEvent.SysEx1:
             case MidiEvent.SysEx2:
             case MidiEvent.Meta:
-                var metaType = running_status == MidiEvent.Meta ? ReadByte() : (byte)0;
+                var metaType = _runningStatus == MidiEvent.Meta ? ReadByte() : (byte)0;
                 var len = ReadVariableLength();
                 var args = new byte[len];
 
@@ -104,13 +109,13 @@ public class SmfReader
                     ReadBytes(args);
                 }
 
-                return new MidiMessage(deltaTime, new MidiEvent(running_status, metaType, 0, args, 0, args.Length));
+                return new MidiMessage(deltaTime, new MidiEvent(_runningStatus, metaType, 0, args, 0, args.Length));
 
             default:
-                int value = running_status;
+                int value = _runningStatus;
                 value += ReadByte() << 8;
 
-                if (MidiEvent.FixedDataSize(running_status) == 2)
+                if (MidiEvent.FixedDataSize(_runningStatus) == 2)
                 {
                     value += ReadByte() << 16;
                 }
@@ -121,17 +126,17 @@ public class SmfReader
 
     private void ReadBytes(byte[] args)
     {
-        current_track_size += args.Length;
+        _currentTrackSize += args.Length;
         var start = 0;
 
-        if (peek_byte >= 0)
+        if (_peekByte >= 0)
         {
-            args[0] = (byte)peek_byte;
-            peek_byte = -1;
+            args[0] = (byte)_peekByte;
+            _peekByte = -1;
             start = 1;
         }
 
-        var len = stream.Read(args, start, args.Length - start);
+        var len = _stream!.Read(args, start, args.Length - start);
         try
         {
             if (len < args.Length - start)
@@ -141,7 +146,7 @@ public class SmfReader
         }
         finally
         {
-            stream_position += len;
+            _streamPosition += len;
         }
     }
 
@@ -149,7 +154,7 @@ public class SmfReader
     {
         var val = 0;
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < MaxVariableLengthBytes; i++)
         {
             var b = ReadByte();
             val = (val << 7) + b;
@@ -165,38 +170,38 @@ public class SmfReader
         throw ParseError("Delta time specification exceeds the 4-byte limitation.");
     }
 
-    private int peek_byte = -1;
-    private int stream_position;
+    private int _peekByte = -1;
+    private int _streamPosition;
 
     private byte PeekByte()
     {
-        if (peek_byte < 0)
+        if (_peekByte < 0)
         {
-            peek_byte = stream.ReadByte();
+            _peekByte = _stream!.ReadByte();
         }
 
-        if (peek_byte < 0)
+        if (_peekByte < 0)
         {
             throw ParseError("Insufficient stream. Failed to read a byte.");
         }
 
-        return (byte)peek_byte;
+        return (byte)_peekByte;
     }
 
     private byte ReadByte()
     {
         try
         {
-            current_track_size++;
+            _currentTrackSize++;
 
-            if (peek_byte >= 0)
+            if (_peekByte >= 0)
             {
-                var b = (byte)peek_byte;
-                peek_byte = -1;
+                var b = (byte)_peekByte;
+                _peekByte = -1;
                 return b;
             }
 
-            var ret = stream.ReadByte();
+            var ret = _stream!.ReadByte();
 
             if (ret < 0)
             {
@@ -208,11 +213,11 @@ public class SmfReader
         }
         finally
         {
-            stream_position++;
+            _streamPosition++;
         }
     }
 
     private short ReadInt16() => (short)((ReadByte() << 8) + ReadByte());
     private int ReadInt32() => (((ReadByte() << 8) + ReadByte() << 8) + ReadByte() << 8) + ReadByte();
-    private SmfParserException ParseError(string msg) => new(string.Format($"{msg} (at {stream_position})"));
+    private SmfParserException ParseError(string msg) => new($"{msg} (at {_streamPosition})");
 }

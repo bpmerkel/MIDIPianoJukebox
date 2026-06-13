@@ -1,6 +1,9 @@
 namespace MIDIPianoJukebox.Midi;
 
-public struct MidiEvent
+/// <summary>
+/// Represents a MIDI event with status byte, data bytes, and optional system exclusive data.
+/// </summary>
+public readonly struct MidiEvent
 {
     public const byte NoteOff = 0x80;
     public const byte NoteOn = 0x90;
@@ -42,7 +45,7 @@ public struct MidiEvent
                 var z = FixedDataSize(bytes[i]);
                 if (end < i + z)
                 {
-                    throw new Exception($"Received data was incomplete to build MIDI status message for '{bytes[i]:X}' status.");
+                    throw new InvalidDataException($"Received data was incomplete to build MIDI status message for '{bytes[i]:X}' status.");
                 }
 
                 yield return new MidiEvent(bytes[i],
