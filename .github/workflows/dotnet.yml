@@ -3,6 +3,10 @@
 
 name: .NET
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   push:
     branches: [ "master" ]
