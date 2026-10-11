@@ -1,5 +1,4 @@
 # MIDI Piano Jukebox
-
 My wife purchased a Baby Grand Player Piano, and much to my delight, it included MIDI Out and In connections.
 Further, I inherited a PC from my father where he had accumulated over 170,000 MIDI files from varying genres.
 
@@ -15,16 +14,15 @@ server that runs on the Windows device connected to the Piano.
 I first evaluated MIDI NuGet packages with LINQPad--to read through the MIDI files and iventory them into a LiteDB document database.
 Then play the MIDI files through Windows' sequencer, and switchable to the Bluetooth MIDI adapter to the piano.
 
-Here are the major technologies for the solution:
+## Technologies for the solution
 * .NET 10
 * ASP.NET Core 10
-* Blazor server-side to drive a server-connected MIDI device
+* Blazor server-side to drive a server-connected MIDI player device
 * MudBlazor Material UI Components
 * LiteDB Document Database
 * Managed MIDI classes for MIDI file reading, parsing, and playing
 
 ## Setting up the site
-
 The site is easy to setup. Follow these steps:
 1. Use Visual Studio to build and publish the site to a folder on a Windows device (such as a small laptop) that acts as the "server".
 2. The site runs as server-side Blazor, and, aside from playlist creation/management, is meant to "remotely control" a MIDI player that runs on the host
@@ -47,13 +45,10 @@ The app will track your song ratings, allow skipping forward, shufffle, play/pau
 I've created playlists for "Ragtime", "Christmas", "Beatles", and plenty of other genres and keywords--even MIDI files recorded by certain artists that sounds great on the piano.
 
 # How to run the ASP.NET Core as a Windows Service
-
 Running an ASP.NET Core app as a Windows Service allows it to start automatically on boot and run in the background without IIS. This is ideal for APIs, background jobs, or intranet apps.
 
 ## 1. Create the Windows Service
-
-From an elevated PowerShell:
-
+1. From an elevated PowerShell
 ``` powershell
 New-Service -Name "MIDI Piano Jukebox" `
 -BinaryPathName "C:\path\to\MIDIPianoJukebox.exe --contentRoot C:\path\to" `
@@ -61,32 +56,22 @@ New-Service -Name "MIDI Piano Jukebox" `
 -DisplayName "MIDI Piano Jukebox Service" `
 -StartupType Automatic
 ```
-
-Grant the service account Log on as a service rights if needed.
+2. Grant the service account Log on as a Service rights if needed
 
 ## 4. Start and Verify
-
-Start the service:
-
+1. Start the service
 ``` powershell
 Start-Service -Name "MIDI Piano Jukebox"
 ```
-Check status:
-
+2. Check status
 ``` powershell
 Get-Service -Name "MIDI Piano Jukebox"
 ```
-
-View logs in Event Viewer → Windows Logs → Application.
+3. View logs in Event Viewer → Windows Logs → Application
 
 ## Tips
-
-Avoid using `Directory.GetCurrentDirectory();` use `AppContext.BaseDirectory` for file paths.
-
-Configure URLs via `ASPNETCORE_URLS` environment variable.
-
-For HTTPS, use a valid certificate (dev certs aren’t supported for services).
-
-Always deploy from `dotnet publish` output, not `dotnet build`.
-
-This approach ensures your ASP.NET Core app runs reliably as a background Windows Service with proper startup, logging, and deployment practices.
+- Avoid using `Directory.GetCurrentDirectory();` use `AppContext.BaseDirectory` for file paths.
+- Configure URLs via `ASPNETCORE_URLS` environment variable.
+- For HTTPS, use a valid certificate (dev certs aren’t supported for services).
+- Always deploy from `dotnet publish` output, not `dotnet build`.
+- This approach ensures your ASP.NET Core app runs reliably as a background Windows Service with proper startup, logging, and deployment practices.
